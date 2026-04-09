@@ -84,6 +84,57 @@ func TestProductRepository_DecreaseStock_WhenInsufficientBalance_ShouldNotUpdate
 	}
 }
 
+func TestProductRepository_DecreaseStock_WhenSameIdempotencyKeyReplayed_ShouldBeNoOp(t *testing.T) {
+	// Arrange
+	db := openStockTestDB(t)
+	repo := NewProductRepository(db)
+	ctx := context.Background()
+
+	p, err := domain.NewProduct("P-001", "Produto 1", 10)
+	if err != nil {
+		t.Fatalf("unexpected domain error: %v", err)
+	}
+	created, err := repo.CreateProduct(ctx, p)
+	if err != nil {
+		t.Fatalf("unexpected create error: %v", err)
+	}
+
+	idemKey := "idem-replay-1"
+	items := []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}}
+
+	// Act
+	err = repo.DecreaseStock(ctx, items, idemKey)
+	if err != nil {
+		t.Fatalf("unexpected first decrease error: %v", err)
+	}
+
+	err = repo.DecreaseStock(ctx, items, idemKey)
+	if err != nil {
+		t.Fatalf("unexpected replay decrease error: %v", err)
+	}
+
+	products, err := repo.ListProducts(ctx)
+	if err != nil {
+		t.Fatalf("unexpected list error: %v", err)
+	}
+
+	// Assert
+	if len(products) != 1 {
+		t.Fatalf("expected 1 product, got %d", len(products))
+	}
+	if products[0].Saldo != 8 {
+		t.Fatalf("expected saldo 8 after replay no-op, got %d", products[0].Saldo)
+	}
+
+	var count int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM estoque_baixas WHERE idempotency_key = $1", idemKey).Scan(&count); err != nil {
+		t.Fatalf("failed to count idempotency records: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly 1 idempotency record, got %d", count)
+	}
+}
+
 func openStockTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
@@ -107,6 +158,9 @@ func openStockTestDB(t *testing.T) *sql.DB {
 
 	if _, err := db.Exec("TRUNCATE TABLE produtos RESTART IDENTITY"); err != nil {
 		t.Fatalf("failed to truncate produtos (run migrations first): %v", err)
+	}
+	if _, err := db.Exec("TRUNCATE TABLE estoque_baixas RESTART IDENTITY"); err != nil {
+		t.Fatalf("failed to truncate estoque_baixas (run migrations first): %v", err)
 	}
 
 	t.Cleanup(func() {

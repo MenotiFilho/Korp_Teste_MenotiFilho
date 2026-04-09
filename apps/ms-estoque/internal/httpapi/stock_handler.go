@@ -54,6 +54,10 @@ func (h *StockHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if strings.TrimSpace(idempotencyKey) == "" {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "cabecalho Idempotency-Key e obrigatorio", map[string]string{"field": "Idempotency-Key"})
+		return
+	}
 	if err := h.service.DecreaseStock(r.Context(), inputs, idempotencyKey); err != nil {
 		h.handleDecreaseError(w, r, err)
 		return
@@ -65,6 +69,11 @@ func (h *StockHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 func (h *StockHandler) handleDecreaseError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, repository.ErrInvalidDecreaseItem) {
 		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "itens de baixa invalidos", map[string]string{"error": err.Error()})
+		return
+	}
+
+	if errors.Is(err, repository.ErrIdempotencyKeyRequired) {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "cabecalho Idempotency-Key e obrigatorio", map[string]string{"field": "Idempotency-Key"})
 		return
 	}
 
