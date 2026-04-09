@@ -35,3 +35,17 @@ Forcar versao (uso de recuperacao):
 ```bash
 make migrate-force VERSION=1
 ```
+
+## Testes
+
+Testes unitarios:
+
+```bash
+go test ./...
+```
+
+Testes de integracao do repository (com Postgres local em `localhost:5433`):
+
+```bash
+TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go test ./internal/repository -v
+```
