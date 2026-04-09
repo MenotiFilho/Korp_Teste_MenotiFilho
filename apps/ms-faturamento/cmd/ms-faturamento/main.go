@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -9,9 +10,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
+
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/config"
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/httpapi"
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/middleware"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/service"
 )
 
 func main() {
@@ -24,7 +29,23 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	db, err := sql.Open("pgx", cfg.DatabaseURL)
+	if err != nil {
+		slog.Error("failed to open database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	if err := db.PingContext(context.Background()); err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+
 	mux := httpapi.NewMux()
+	invoiceRepo := repository.NewInvoiceRepository(db)
+	invoiceService := service.NewInvoiceService(invoiceRepo)
+	invoiceHandler := httpapi.NewInvoiceHandler(invoiceService)
+	httpapi.RegisterInvoiceRoutes(mux, invoiceHandler)
 	handler := middleware.RequestID(middleware.Recover(middleware.MaxBodyBytes(cfg.MaxBodyBytes, middleware.Logger(mux))))
 
 	server := &http.Server{
