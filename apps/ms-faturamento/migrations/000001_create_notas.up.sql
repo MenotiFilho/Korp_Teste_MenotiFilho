@@ -1,0 +1,22 @@
+CREATE SEQUENCE IF NOT EXISTS nota_numero_seq START WITH 1 INCREMENT BY 1;
+
+CREATE TABLE IF NOT EXISTS notas (
+    id BIGSERIAL PRIMARY KEY,
+    numero INTEGER NOT NULL DEFAULT nextval('nota_numero_seq') UNIQUE,
+    status VARCHAR(16) NOT NULL CHECK (status IN ('ABERTA', 'FECHADA')) DEFAULT 'ABERTA',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_notas_set_updated_at
+BEFORE UPDATE ON notas
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
