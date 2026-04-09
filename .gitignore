@@ -1,0 +1,23 @@
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
+
+# Node/Angular
+node_modules/
+dist/
+coverage/
+
+# Go
+bin/
+*.test
+
+# Env
+.env
+.env.*
+
+# Docker
+*.pid
