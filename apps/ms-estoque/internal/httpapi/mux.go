@@ -10,6 +10,7 @@ func NewMux() *http.ServeMux {
 
 func RegisterProductRoutes(mux *http.ServeMux, handler *ProductHandler) {
 	mux.HandleFunc("POST /api/v1/produtos", handler.CreateProduct)
+	mux.HandleFunc("GET /api/v1/produtos", handler.ListProducts)
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {

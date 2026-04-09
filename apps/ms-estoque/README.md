@@ -73,6 +73,7 @@ Endpoints disponiveis:
 
 - `GET /health`
 - `POST /api/v1/produtos`
+- `GET /api/v1/produtos`
 
 Exemplo de criacao de produto:
 
@@ -80,4 +81,10 @@ Exemplo de criacao de produto:
 curl -i -X POST "http://localhost:8081/api/v1/produtos" \
   -H "Content-Type: application/json" \
   -d '{"codigo":"P-001","descricao":"Produto 1","saldo":10}'
+```
+
+Exemplo de listagem de produtos:
+
+```bash
+curl -i "http://localhost:8081/api/v1/produtos"
 ```

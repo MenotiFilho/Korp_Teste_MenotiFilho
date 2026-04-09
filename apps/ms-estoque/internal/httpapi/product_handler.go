@@ -12,6 +12,7 @@ import (
 
 type ProductCreator interface {
 	CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error)
+	ListProducts(ctx context.Context) ([]domain.Product, error)
 }
 
 type ProductHandler struct {
@@ -58,6 +59,28 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		Descricao: product.Descricao,
 		Saldo:     product.Saldo,
 	})
+}
+
+func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := h.service.ListProducts(r.Context())
+	if err != nil {
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	out := make([]productResponse, 0, len(products))
+	for _, p := range products {
+		out = append(out, productResponse{
+			ID:        p.ID,
+			Codigo:    p.Codigo,
+			Descricao: p.Descricao,
+			Saldo:     p.Saldo,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(out)
 }
 
 func (h *ProductHandler) handleCreateError(w http.ResponseWriter, r *http.Request, err error) {

@@ -21,10 +21,18 @@ type createProductInput struct {
 
 type productCreatorStub struct {
 	createFn func(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error)
+	listFn   func(ctx context.Context) ([]domain.Product, error)
 }
 
 func (s productCreatorStub) CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error) {
 	return s.createFn(ctx, codigo, descricao, saldo)
+}
+
+func (s productCreatorStub) ListProducts(ctx context.Context) ([]domain.Product, error) {
+	if s.listFn == nil {
+		return []domain.Product{}, nil
+	}
+	return s.listFn(ctx)
 }
 
 func TestCreateProductHandler_WhenPayloadIsValid_ShouldReturn201WithProduct(t *testing.T) {
@@ -126,6 +134,83 @@ func TestCreateProductHandler_WhenUnexpectedError_ShouldReturn500(t *testing.T) 
 
 	// Act
 	h.CreateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "INTERNAL_ERROR")
+}
+
+func TestListProductsHandler_WhenProductsExist_ShouldReturn200WithOrderedList(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{listFn: func(_ context.Context) ([]domain.Product, error) {
+		return []domain.Product{
+			{ID: 1, Codigo: "P-001", Descricao: "Produto 1", Saldo: 10},
+			{ID: 2, Codigo: "P-002", Descricao: "Produto 2", Saldo: 5},
+		}, nil
+	}}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/produtos", nil)
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.ListProducts(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var out []productResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("expected valid JSON body, got %v", err)
+	}
+	if len(out) != 2 {
+		t.Fatalf("expected 2 products, got %d", len(out))
+	}
+	if out[0].Codigo != "P-001" || out[1].Codigo != "P-002" {
+		t.Fatalf("unexpected order/content: %+v", out)
+	}
+}
+
+func TestListProductsHandler_WhenNoProducts_ShouldReturn200WithEmptyList(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{listFn: func(_ context.Context) ([]domain.Product, error) {
+		return []domain.Product{}, nil
+	}}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/produtos", nil)
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.ListProducts(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+
+	var out []productResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("expected valid JSON body, got %v", err)
+	}
+	if len(out) != 0 {
+		t.Fatalf("expected empty list, got %d items", len(out))
+	}
+}
+
+func TestListProductsHandler_WhenServiceFails_ShouldReturn500(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{listFn: func(_ context.Context) ([]domain.Product, error) {
+		return nil, errors.New("db unavailable")
+	}}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/produtos", nil)
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.ListProducts(rec, req)
 
 	// Assert
 	if rec.Code != http.StatusInternalServerError {
