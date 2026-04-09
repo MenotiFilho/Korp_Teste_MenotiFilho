@@ -104,6 +104,7 @@ Observacao:
 
 - `POST /api/v1/estoque/baixa`
 - `Content-Type: application/json`
+- `Idempotency-Key: <chave-unica-obrigatoria>`
 
 Body:
 
@@ -124,6 +125,7 @@ Body:
 
 ### Erros de negocio
 
+- `400 VALIDATION_ERROR` (header `Idempotency-Key` ausente)
 - `400 VALIDATION_ERROR` (item invalido)
 - `404 PRODUCT_NOT_FOUND`
 - `409 INSUFFICIENT_STOCK`
@@ -138,20 +140,24 @@ Body:
 
 - A baixa e transacional no banco.
 - O servico bloqueia a linha do produto durante baixa (`FOR UPDATE`).
+- O servico ordena os itens por `codigo` antes de lock para reduzir risco de deadlock em baixa concorrente.
 - Se qualquer item falhar, a transacao e revertida.
 - Nao e permitido saldo negativo.
+- `Idempotency-Key` e obrigatorio no endpoint de baixa.
+- Repeticao da mesma baixa com a mesma `Idempotency-Key` e no-op (nao debita novamente).
 
 ## Comandos de validacao usados na Task 12
 
 ```bash
 docker compose -f infra/docker-compose.yml up -d db-estoque ms-estoque
 DB_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" make -C apps/ms-estoque migrate-up
-go test ./... -C apps/ms-estoque
-go test ./... -short -C apps/ms-estoque
+go test -C apps/ms-estoque ./...
+go test -C apps/ms-estoque ./... -short
 curl -i http://localhost:8081/health
 curl -i -X POST http://localhost:8081/api/v1/produtos -H "Content-Type: application/json" -d '{"codigo":"P-100","descricao":"Produto 100","saldo":10}'
 curl -i http://localhost:8081/api/v1/produtos
-curl -i -X POST http://localhost:8081/api/v1/estoque/baixa -H "Content-Type: application/json" -d '{"itens":[{"codigo":"P-100","quantidade":3}]}'
+curl -i -X POST http://localhost:8081/api/v1/estoque/baixa -H "Content-Type: application/json" -H "Idempotency-Key: baixa-p100-001" -d '{"itens":[{"codigo":"P-100","quantidade":3}]}'
+curl -i -X POST http://localhost:8081/api/v1/estoque/baixa -H "Content-Type: application/json" -H "Idempotency-Key: baixa-p100-001" -d '{"itens":[{"codigo":"P-100","quantidade":3}]}'
 curl -i http://localhost:8081/api/v1/produtos
 docker compose -f infra/docker-compose.yml down
 ```
