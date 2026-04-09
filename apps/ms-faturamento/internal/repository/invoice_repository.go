@@ -154,6 +154,31 @@ ORDER BY id ASC
 	return items, nil
 }
 
+func (r *InvoiceRepository) GetInvoiceByID(ctx context.Context, id int64) (domain.Invoice, error) {
+	const query = `
+SELECT id, numero, status
+FROM notas
+WHERE id = $1
+`
+
+	var inv domain.Invoice
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&inv.ID, &inv.Numero, &inv.Status)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Invoice{}, fmt.Errorf("%w: id=%d", ErrInvoiceNotFound, id)
+		}
+		return domain.Invoice{}, err
+	}
+
+	items, err := r.listItemsByInvoice(ctx, inv.ID)
+	if err != nil {
+		return domain.Invoice{}, err
+	}
+	inv.Itens = items
+
+	return inv, nil
+}
+
 func (r *InvoiceRepository) UpdateStatus(ctx context.Context, id int64, status string) error {
 	const query = `UPDATE notas SET status = $1 WHERE id = $2`
 

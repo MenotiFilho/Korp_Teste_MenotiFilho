@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 
@@ -45,7 +46,11 @@ func main() {
 	invoiceRepo := repository.NewInvoiceRepository(db)
 	invoiceService := service.NewInvoiceService(invoiceRepo)
 	invoiceHandler := httpapi.NewInvoiceHandler(invoiceService)
+	stockClient := service.NewStockClient(cfg.EstoqueURL, 2*time.Second, 1)
+	printService := service.NewPrintInvoiceService(invoiceRepo, stockClient)
+	printHandler := httpapi.NewPrintInvoiceHandler(invoiceRepo, printService)
 	httpapi.RegisterInvoiceRoutes(mux, invoiceHandler)
+	httpapi.RegisterPrintInvoiceRoutes(mux, printHandler)
 	handler := middleware.RequestID(middleware.Recover(middleware.MaxBodyBytes(cfg.MaxBodyBytes, middleware.Logger(mux))))
 
 	server := &http.Server{
