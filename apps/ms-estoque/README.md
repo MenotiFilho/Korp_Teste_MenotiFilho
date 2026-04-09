@@ -60,3 +60,24 @@ Testes de integracao do repository com URL customizada:
 ```bash
 TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go test ./internal/repository -v
 ```
+
+## Executar API local
+
+Com banco em Docker e migrations aplicadas:
+
+```bash
+DB_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go run ./cmd/ms-estoque
+```
+
+Endpoints disponiveis:
+
+- `GET /health`
+- `POST /api/v1/produtos`
+
+Exemplo de criacao de produto:
+
+```bash
+curl -i -X POST "http://localhost:8081/api/v1/produtos" \
+  -H "Content-Type: application/json" \
+  -d '{"codigo":"P-001","descricao":"Produto 1","saldo":10}'
+```

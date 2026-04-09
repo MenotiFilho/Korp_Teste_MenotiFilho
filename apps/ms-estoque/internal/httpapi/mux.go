@@ -8,6 +8,10 @@ func NewMux() *http.ServeMux {
 	return mux
 }
 
+func RegisterProductRoutes(mux *http.ServeMux, handler *ProductHandler) {
+	mux.HandleFunc("POST /api/v1/produtos", handler.CreateProduct)
+}
+
 func healthHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }

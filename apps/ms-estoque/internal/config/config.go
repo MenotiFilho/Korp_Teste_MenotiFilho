@@ -9,6 +9,7 @@ import (
 
 const (
 	defaultPort            = "8081"
+	defaultDatabaseURL     = "postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable"
 	defaultReadTimeoutSec  = 10
 	defaultWriteTimeoutSec = 10
 	defaultIdleTimeoutSec  = 30
@@ -17,6 +18,7 @@ const (
 
 type Config struct {
 	Port            string
+	DatabaseURL     string
 	ReadTimeout     time.Duration
 	WriteTimeout    time.Duration
 	IdleTimeout     time.Duration
@@ -26,6 +28,7 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		Port:            getEnv("PORT", defaultPort),
+		DatabaseURL:     getEnv("DB_URL", defaultDatabaseURL),
 		ReadTimeout:     secondsEnv("HTTP_READ_TIMEOUT_SEC", defaultReadTimeoutSec),
 		WriteTimeout:    secondsEnv("HTTP_WRITE_TIMEOUT_SEC", defaultWriteTimeoutSec),
 		IdleTimeout:     secondsEnv("HTTP_IDLE_TIMEOUT_SEC", defaultIdleTimeoutSec),
@@ -34,6 +37,9 @@ func Load() (Config, error) {
 
 	if cfg.Port == "" {
 		return Config{}, fmt.Errorf("PORT cannot be empty")
+	}
+	if cfg.DatabaseURL == "" {
+		return Config{}, fmt.Errorf("DB_URL cannot be empty")
 	}
 
 	return cfg, nil

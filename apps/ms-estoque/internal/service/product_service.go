@@ -1,0 +1,33 @@
+package service
+
+import (
+	"context"
+
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-estoque/internal/domain"
+)
+
+type ProductRepository interface {
+	CreateProduct(ctx context.Context, p domain.Product) (domain.Product, error)
+	ListProducts(ctx context.Context) ([]domain.Product, error)
+}
+
+type ProductService struct {
+	repo ProductRepository
+}
+
+func NewProductService(repo ProductRepository) *ProductService {
+	return &ProductService{repo: repo}
+}
+
+func (s *ProductService) CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error) {
+	p, err := domain.NewProduct(codigo, descricao, saldo)
+	if err != nil {
+		return domain.Product{}, err
+	}
+
+	return s.repo.CreateProduct(ctx, p)
+}
+
+func (s *ProductService) ListProducts(ctx context.Context) ([]domain.Product, error) {
+	return s.repo.ListProducts(ctx)
+}
