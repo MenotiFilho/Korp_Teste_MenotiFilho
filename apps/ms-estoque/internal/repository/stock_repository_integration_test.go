@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"os"
+	"sync"
 	"testing"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -132,6 +133,162 @@ func TestProductRepository_DecreaseStock_WhenSameIdempotencyKeyReplayed_ShouldBe
 	}
 	if count != 1 {
 		t.Fatalf("expected exactly 1 idempotency record, got %d", count)
+	}
+}
+
+func TestProductRepository_DecreaseStock_WhenConcurrentRequestsCompeteForLastUnit_ShouldAllowOnlyOneSuccess(t *testing.T) {
+	// Arrange
+	db := openStockTestDB(t)
+	repo := NewProductRepository(db)
+	ctx := context.Background()
+
+	p, err := domain.NewProduct("P-001", "Produto 1", 1)
+	if err != nil {
+		t.Fatalf("unexpected domain error: %v", err)
+	}
+	created, err := repo.CreateProduct(ctx, p)
+	if err != nil {
+		t.Fatalf("unexpected create error: %v", err)
+	}
+
+	type result struct {
+		err error
+	}
+
+	results := make(chan result, 2)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	runDecrease := func(idemKey string) {
+		defer wg.Done()
+		<-start
+		err := repo.DecreaseStock(context.Background(), []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 1}}, idemKey)
+		results <- result{err: err}
+	}
+
+	wg.Add(2)
+	go runDecrease("idem-race-1")
+	go runDecrease("idem-race-2")
+
+	// Act
+	close(start)
+	wg.Wait()
+	close(results)
+
+	successCount := 0
+	insufficientCount := 0
+
+	for r := range results {
+		switch {
+		case r.err == nil:
+			successCount++
+		case errors.Is(r.err, ErrProductInsufficientStock):
+			insufficientCount++
+		default:
+			t.Fatalf("unexpected concurrent decrease error: %v", r.err)
+		}
+	}
+
+	products, err := repo.ListProducts(ctx)
+	if err != nil {
+		t.Fatalf("unexpected list error: %v", err)
+	}
+
+	var count int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM estoque_baixas").Scan(&count); err != nil {
+		t.Fatalf("failed to count idempotency records: %v", err)
+	}
+
+	// Assert
+	if successCount != 1 {
+		t.Fatalf("expected 1 successful decrease, got %d", successCount)
+	}
+	if insufficientCount != 1 {
+		t.Fatalf("expected 1 insufficient stock error, got %d", insufficientCount)
+	}
+	if len(products) != 1 {
+		t.Fatalf("expected 1 product, got %d", len(products))
+	}
+	if products[0].Saldo != 0 {
+		t.Fatalf("expected saldo 0 after concurrent race, got %d", products[0].Saldo)
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly 1 idempotency record, got %d", count)
+	}
+}
+
+func TestProductRepository_DecreaseStock_WhenConcurrentRequestsShareSameIdempotencyKey_ShouldApplyOnlyOnce(t *testing.T) {
+	// Arrange
+	db := openStockTestDB(t)
+	repo := NewProductRepository(db)
+	ctx := context.Background()
+
+	p, err := domain.NewProduct("P-001", "Produto 1", 10)
+	if err != nil {
+		t.Fatalf("unexpected domain error: %v", err)
+	}
+	created, err := repo.CreateProduct(ctx, p)
+	if err != nil {
+		t.Fatalf("unexpected create error: %v", err)
+	}
+
+	items := []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}}
+	sharedKey := "idem-race-shared-1"
+
+	type result struct {
+		err error
+	}
+
+	results := make(chan result, 2)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+
+	runDecrease := func() {
+		defer wg.Done()
+		<-start
+		err := repo.DecreaseStock(context.Background(), items, sharedKey)
+		results <- result{err: err}
+	}
+
+	wg.Add(2)
+	go runDecrease()
+	go runDecrease()
+
+	// Act
+	close(start)
+	wg.Wait()
+	close(results)
+
+	successCount := 0
+	for r := range results {
+		if r.err != nil {
+			t.Fatalf("unexpected concurrent same-key decrease error: %v", r.err)
+		}
+		successCount++
+	}
+
+	products, err := repo.ListProducts(ctx)
+	if err != nil {
+		t.Fatalf("unexpected list error: %v", err)
+	}
+
+	var count int
+	if err := db.QueryRowContext(ctx, "SELECT COUNT(*) FROM estoque_baixas WHERE idempotency_key = $1", sharedKey).Scan(&count); err != nil {
+		t.Fatalf("failed to count idempotency records: %v", err)
+	}
+
+	// Assert
+	if successCount != 2 {
+		t.Fatalf("expected 2 successful responses, got %d", successCount)
+	}
+	if len(products) != 1 {
+		t.Fatalf("expected 1 product, got %d", len(products))
+	}
+	if products[0].Saldo != 8 {
+		t.Fatalf("expected saldo 8 after concurrent same-key replay no-op, got %d", products[0].Saldo)
+	}
+	if count != 1 {
+		t.Fatalf("expected exactly 1 idempotency record for shared key, got %d", count)
 	}
 }
 
