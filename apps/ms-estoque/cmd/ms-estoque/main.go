@@ -49,14 +49,16 @@ func main() {
 	stockHandler := httpapi.NewStockHandler(stockService)
 	httpapi.RegisterProductRoutes(mux, productHandler)
 	httpapi.RegisterStockRoutes(mux, stockHandler)
-	handler := middleware.RequestID(middleware.Recover(middleware.Logger(mux)))
+	handler := middleware.RequestID(middleware.Recover(middleware.MaxBodyBytes(cfg.MaxBodyBytes, middleware.Logger(mux))))
 
 	server := &http.Server{
-		Addr:         ":" + cfg.Port,
-		Handler:      handler,
-		ReadTimeout:  cfg.ReadTimeout,
-		WriteTimeout: cfg.WriteTimeout,
-		IdleTimeout:  cfg.IdleTimeout,
+		Addr:              ":" + cfg.Port,
+		Handler:           handler,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		MaxHeaderBytes:    cfg.MaxHeaderBytes,
+		ReadTimeout:       cfg.ReadTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)

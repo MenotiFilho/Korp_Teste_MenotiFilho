@@ -69,6 +69,15 @@ Com banco em Docker e migrations aplicadas:
 DB_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go run ./cmd/ms-estoque
 ```
 
+Variaveis opcionais de hardening HTTP:
+
+- `HTTP_READ_HEADER_TIMEOUT_SEC` (default: `5`)
+- `HTTP_MAX_HEADER_BYTES` (default: `1048576`)
+- `HTTP_MAX_BODY_BYTES` (default: `1048576`)
+- `HTTP_READ_TIMEOUT_SEC` (default: `10`)
+- `HTTP_WRITE_TIMEOUT_SEC` (default: `10`)
+- `HTTP_IDLE_TIMEOUT_SEC` (default: `30`)
+
 Endpoints disponiveis:
 
 - `GET /health`

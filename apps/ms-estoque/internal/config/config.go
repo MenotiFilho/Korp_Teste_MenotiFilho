@@ -10,6 +10,9 @@ import (
 const (
 	defaultPort            = "8081"
 	defaultDatabaseURL     = "postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable"
+	defaultReadHeaderSec   = 5
+	defaultMaxHeaderBytes  = 1 << 20
+	defaultMaxBodyBytes    = 1 << 20
 	defaultReadTimeoutSec  = 10
 	defaultWriteTimeoutSec = 10
 	defaultIdleTimeoutSec  = 30
@@ -17,22 +20,28 @@ const (
 )
 
 type Config struct {
-	Port            string
-	DatabaseURL     string
-	ReadTimeout     time.Duration
-	WriteTimeout    time.Duration
-	IdleTimeout     time.Duration
-	ShutdownTimeout time.Duration
+	Port              string
+	DatabaseURL       string
+	ReadHeaderTimeout time.Duration
+	MaxHeaderBytes    int
+	MaxBodyBytes      int64
+	ReadTimeout       time.Duration
+	WriteTimeout      time.Duration
+	IdleTimeout       time.Duration
+	ShutdownTimeout   time.Duration
 }
 
 func Load() (Config, error) {
 	cfg := Config{
-		Port:            getEnv("PORT", defaultPort),
-		DatabaseURL:     getEnv("DB_URL", defaultDatabaseURL),
-		ReadTimeout:     secondsEnv("HTTP_READ_TIMEOUT_SEC", defaultReadTimeoutSec),
-		WriteTimeout:    secondsEnv("HTTP_WRITE_TIMEOUT_SEC", defaultWriteTimeoutSec),
-		IdleTimeout:     secondsEnv("HTTP_IDLE_TIMEOUT_SEC", defaultIdleTimeoutSec),
-		ShutdownTimeout: secondsEnv("HTTP_SHUTDOWN_TIMEOUT_SEC", defaultShutdownSec),
+		Port:              getEnv("PORT", defaultPort),
+		DatabaseURL:       getEnv("DB_URL", defaultDatabaseURL),
+		ReadHeaderTimeout: secondsEnv("HTTP_READ_HEADER_TIMEOUT_SEC", defaultReadHeaderSec),
+		MaxHeaderBytes:    intEnv("HTTP_MAX_HEADER_BYTES", defaultMaxHeaderBytes),
+		MaxBodyBytes:      int64(intEnv("HTTP_MAX_BODY_BYTES", defaultMaxBodyBytes)),
+		ReadTimeout:       secondsEnv("HTTP_READ_TIMEOUT_SEC", defaultReadTimeoutSec),
+		WriteTimeout:      secondsEnv("HTTP_WRITE_TIMEOUT_SEC", defaultWriteTimeoutSec),
+		IdleTimeout:       secondsEnv("HTTP_IDLE_TIMEOUT_SEC", defaultIdleTimeoutSec),
+		ShutdownTimeout:   secondsEnv("HTTP_SHUTDOWN_TIMEOUT_SEC", defaultShutdownSec),
 	}
 
 	if cfg.Port == "" {
@@ -40,6 +49,12 @@ func Load() (Config, error) {
 	}
 	if cfg.DatabaseURL == "" {
 		return Config{}, fmt.Errorf("DB_URL cannot be empty")
+	}
+	if cfg.MaxHeaderBytes <= 0 {
+		return Config{}, fmt.Errorf("HTTP_MAX_HEADER_BYTES must be positive")
+	}
+	if cfg.MaxBodyBytes <= 0 {
+		return Config{}, fmt.Errorf("HTTP_MAX_BODY_BYTES must be positive")
 	}
 
 	return cfg, nil
@@ -59,4 +74,13 @@ func secondsEnv(key string, fallback int) time.Duration {
 		n = fallback
 	}
 	return time.Duration(n) * time.Second
+}
+
+func intEnv(key string, fallback int) int {
+	v := getEnv(key, strconv.Itoa(fallback))
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return fallback
+	}
+	return n
 }
