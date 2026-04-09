@@ -10,6 +10,12 @@ Suba o banco dedicado do estoque:
 docker compose -f ../../infra/docker-compose.yml up -d db-estoque
 ```
 
+Subir banco + ms-estoque via Docker Compose:
+
+```bash
+docker compose -f ../../infra/docker-compose.yml up -d --build db-estoque ms-estoque
+```
+
 ## Migrations
 
 Por padrao, o `DB_URL` aponta para:
@@ -67,6 +73,12 @@ Com banco em Docker e migrations aplicadas:
 
 ```bash
 DB_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go run ./cmd/ms-estoque
+```
+
+Parar ambiente Docker:
+
+```bash
+docker compose -f ../../infra/docker-compose.yml down
 ```
 
 Variaveis opcionais de hardening HTTP:
