@@ -74,7 +74,7 @@ Endpoints disponiveis:
 - `GET /health`
 - `POST /api/v1/produtos`
 - `GET /api/v1/produtos`
-- `POST /api/v1/estoque/baixa` (em andamento)
+- `POST /api/v1/estoque/baixa`
 
 Exemplo de criacao de produto:
 
@@ -88,4 +88,12 @@ Exemplo de listagem de produtos:
 
 ```bash
 curl -i "http://localhost:8081/api/v1/produtos"
+```
+
+Exemplo de baixa de estoque:
+
+```bash
+curl -i -X POST "http://localhost:8081/api/v1/estoque/baixa" \
+  -H "Content-Type: application/json" \
+  -d '{"itens":[{"codigo":"P-001","quantidade":2}]}'
 ```

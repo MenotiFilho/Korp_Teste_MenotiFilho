@@ -45,7 +45,10 @@ func main() {
 	productRepo := repository.NewProductRepository(db)
 	productService := service.NewProductService(productRepo)
 	productHandler := httpapi.NewProductHandler(productService)
+	stockService := service.NewStockService(productRepo)
+	stockHandler := httpapi.NewStockHandler(stockService)
 	httpapi.RegisterProductRoutes(mux, productHandler)
+	httpapi.RegisterStockRoutes(mux, stockHandler)
 	handler := middleware.RequestID(middleware.Recover(middleware.Logger(mux)))
 
 	server := &http.Server{
