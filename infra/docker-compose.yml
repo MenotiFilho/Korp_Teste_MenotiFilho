@@ -25,6 +25,35 @@ services:
       timeout: 3s
       retries: 10
 
+  ms-faturamento:
+    build:
+      context: ../apps/ms-faturamento
+      dockerfile: Dockerfile
+    container_name: korp-ms-faturamento
+    environment:
+      PORT: "8082"
+      DB_URL: "postgres://postgres:postgres@db-faturamento:5432/faturamento?sslmode=disable"
+      ESTOQUE_URL: "http://korp-ms-estoque:8081"
+      HTTP_READ_HEADER_TIMEOUT_SEC: "5"
+      HTTP_MAX_HEADER_BYTES: "1048576"
+      HTTP_MAX_BODY_BYTES: "1048576"
+      HTTP_READ_TIMEOUT_SEC: "10"
+      HTTP_WRITE_TIMEOUT_SEC: "10"
+      HTTP_IDLE_TIMEOUT_SEC: "30"
+      HTTP_SHUTDOWN_TIMEOUT_SEC: "10"
+    ports:
+      - "8082:8082"
+    depends_on:
+      db-faturamento:
+        condition: service_healthy
+      ms-estoque:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
   db-estoque:
     image: postgres:16-alpine
     container_name: korp-db-estoque
@@ -42,5 +71,23 @@ services:
       timeout: 5s
       retries: 10
 
+  db-faturamento:
+    image: postgres:16-alpine
+    container_name: korp-db-faturamento
+    environment:
+      POSTGRES_DB: faturamento
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - db_faturamento_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d faturamento"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   db_estoque_data:
+  db_faturamento_data:
