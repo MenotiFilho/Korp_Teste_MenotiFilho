@@ -74,6 +74,7 @@ Endpoints disponiveis:
 - `GET /health`
 - `POST /api/v1/produtos`
 - `GET /api/v1/produtos`
+- `POST /api/v1/estoque/baixa` (em andamento)
 
 Exemplo de criacao de produto:
 

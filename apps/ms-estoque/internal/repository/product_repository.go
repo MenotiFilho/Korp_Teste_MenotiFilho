@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
 
@@ -12,6 +13,12 @@ import (
 )
 
 var ErrProductCodigoAlreadyExists = errors.New("product codigo already exists")
+
+var (
+	ErrProductNotFound          = errors.New("product not found")
+	ErrProductInsufficientStock = errors.New("product insufficient stock")
+	ErrInvalidDecreaseItem      = errors.New("invalid stock decrease item")
+)
 
 type ProductRepository struct {
 	db *sql.DB
@@ -80,4 +87,46 @@ func isUniqueViolation(err error) bool {
 		return pgErr.Code == "23505"
 	}
 	return false
+}
+
+func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	for _, item := range items {
+		codigo := strings.TrimSpace(item.Codigo)
+		if codigo == "" || item.Quantidade <= 0 {
+			return ErrInvalidDecreaseItem
+		}
+
+		var saldo int
+		err := tx.QueryRowContext(ctx, "SELECT saldo FROM produtos WHERE codigo = $1 FOR UPDATE", codigo).Scan(&saldo)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf("%w: codigo=%s", ErrProductNotFound, codigo)
+			}
+			return err
+		}
+
+		if saldo < item.Quantidade {
+			return fmt.Errorf("%w: codigo=%s saldo=%d solicitado=%d", ErrProductInsufficientStock, codigo, saldo, item.Quantidade)
+		}
+
+		if _, err := tx.ExecContext(ctx, "UPDATE produtos SET saldo = saldo - $1 WHERE codigo = $2", item.Quantidade, codigo); err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
 }
