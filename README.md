@@ -12,3 +12,7 @@ Repositorio inicial do desafio tecnico Korp para emissao de notas fiscais com mi
 ## Status
 
 Projeto inicializado com estrutura base. A implementacao sera conduzida em fases conforme o plano na raiz do workspace.
+
+## Documentacao
+
+- Contratos de API do `ms-estoque`: `docs/ms-estoque_contratos_api.md`
