@@ -107,16 +107,11 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 	}
 	defer tx.Rollback()
 
-	var alreadyApplied bool
-	err = tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM estoque_baixas WHERE idempotency_key = $1)`, idempotencyKey).Scan(&alreadyApplied)
-	if err != nil {
-		return err
-	}
-	if alreadyApplied {
-		if err := tx.Commit(); err != nil {
-			return err
+	if _, err := tx.ExecContext(ctx, `INSERT INTO estoque_baixas (idempotency_key) VALUES ($1)`, idempotencyKey); err != nil {
+		if isUniqueViolation(err) {
+			return nil
 		}
-		return nil
+		return err
 	}
 
 	normalized := make([]domain.StockDecreaseItem, 0, len(items))
@@ -154,10 +149,6 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 		if _, err := tx.ExecContext(ctx, "UPDATE produtos SET saldo = saldo - $1 WHERE codigo = $2", item.Quantidade, codigo); err != nil {
 			return err
 		}
-	}
-
-	if _, err := tx.ExecContext(ctx, `INSERT INTO estoque_baixas (idempotency_key) VALUES ($1)`, idempotencyKey); err != nil {
-		return err
 	}
 
 	if err := tx.Commit(); err != nil {
