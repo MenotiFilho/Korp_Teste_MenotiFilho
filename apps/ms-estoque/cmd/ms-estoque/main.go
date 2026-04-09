@@ -25,7 +25,7 @@ func main() {
 	slog.SetDefault(logger)
 
 	mux := httpapi.NewMux()
-	handler := middleware.Recover(mux)
+	handler := middleware.RequestID(middleware.Recover(middleware.Logger(mux)))
 
 	server := &http.Server{
 		Addr:         ":" + cfg.Port,
