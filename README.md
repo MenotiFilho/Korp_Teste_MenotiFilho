@@ -16,3 +16,4 @@ Projeto inicializado com estrutura base. A implementacao sera conduzida em fases
 ## Documentacao
 
 - Contratos de API do `ms-estoque`: `docs/ms-estoque_contratos_api.md`
+- Contratos de API do `ms-faturamento`: `docs/ms-faturamento_contratos_api.md`
