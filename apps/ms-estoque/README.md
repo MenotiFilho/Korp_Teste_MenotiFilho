@@ -38,13 +38,24 @@ make migrate-force VERSION=1
 
 ## Testes
 
-Testes unitarios:
+Testes completos (inclui integracao de repository por padrao):
 
 ```bash
 go test ./...
 ```
 
-Testes de integracao do repository (com Postgres local em `localhost:5433`):
+Observacoes:
+
+- os testes de integracao usam por padrao `postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable`
+- garanta que o Postgres esteja no ar e as migrations aplicadas antes de rodar
+
+Testes apenas unitarios (pula integracao):
+
+```bash
+go test ./... -short
+```
+
+Testes de integracao do repository com URL customizada:
 
 ```bash
 TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable" go test ./internal/repository -v

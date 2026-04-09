@@ -12,6 +12,8 @@ import (
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-estoque/internal/domain"
 )
 
+const defaultTestDatabaseURL = "postgres://postgres:postgres@localhost:5433/estoque?sslmode=disable"
+
 func TestProductRepository_CreateAndListProducts_ShouldPersistAndReturnProducts(t *testing.T) {
 	// Arrange
 	db := openTestDB(t)
@@ -87,9 +89,13 @@ func TestProductRepository_CreateProduct_WhenCodigoDuplicate_ShouldReturnSpecifi
 func openTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
+	if testing.Short() {
+		t.Skip("integration test skipped in short mode")
+	}
+
 	dbURL := os.Getenv("TEST_DATABASE_URL")
 	if dbURL == "" {
-		t.Skip("TEST_DATABASE_URL not set; skipping integration test")
+		dbURL = defaultTestDatabaseURL
 	}
 
 	db, err := sql.Open("pgx", dbURL)
@@ -98,11 +104,11 @@ func openTestDB(t *testing.T) *sql.DB {
 	}
 
 	if err := db.Ping(); err != nil {
-		t.Fatalf("failed to ping database: %v", err)
+		t.Fatalf("failed to ping database (%s): %v", dbURL, err)
 	}
 
 	if _, err := db.Exec("TRUNCATE TABLE produtos RESTART IDENTITY"); err != nil {
-		t.Fatalf("failed to truncate produtos: %v", err)
+		t.Fatalf("failed to truncate produtos (run migrations first): %v", err)
 	}
 
 	t.Cleanup(func() {
