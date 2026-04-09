@@ -16,11 +16,11 @@ func (s invoiceRepoStub) UpdateStatus(ctx context.Context, id int64, status stri
 }
 
 type stockClientStub struct {
-	decreaseFn func(ctx context.Context, items []domain.StockDecreaseItem) error
+	decreaseFn func(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error
 }
 
-func (s stockClientStub) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error {
-	return s.decreaseFn(ctx, items)
+func (s stockClientStub) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error {
+	return s.decreaseFn(ctx, items, idempotencyKey)
 }
 
 func TestPrintInvoiceService_WhenInvoiceIsAbertaAndStockSucceeds_ShouldCloseInvoice(t *testing.T) {
@@ -34,9 +34,12 @@ func TestPrintInvoiceService_WhenInvoiceIsAbertaAndStockSucceeds_ShouldCloseInvo
 		}
 		return nil
 	}}
-	stock := stockClientStub{decreaseFn: func(_ context.Context, items []domain.StockDecreaseItem) error {
+	stock := stockClientStub{decreaseFn: func(_ context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error {
 		if len(items) != 2 {
 			t.Fatalf("expected 2 items, got %d", len(items))
+		}
+		if idempotencyKey != "invoice-print-1" {
+			t.Fatalf("expected idempotency key invoice-print-1, got %q", idempotencyKey)
 		}
 		return nil
 	}}
@@ -66,7 +69,7 @@ func TestPrintInvoiceService_WhenInvoiceIsFechada_ShouldReturnErrorWithoutCallin
 	// Arrange
 	stockCalled := false
 	repo := invoiceRepoStub{updateStatusFn: func(_ context.Context, _ int64, _ string) error { return nil }}
-	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem) error {
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
 		stockCalled = true
 		return nil
 	}}
@@ -102,7 +105,7 @@ func TestPrintInvoiceService_WhenEstoqueUnavailable_ShouldReturnEstoqueErrorAndN
 		statusCalled = true
 		return nil
 	}}
-	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem) error {
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
 		return ErrEstoqueUnavailable
 	}}
 
@@ -137,7 +140,7 @@ func TestPrintInvoiceService_WhenInsufficientStock_ShouldReturnErrorAndNotUpdate
 		statusCalled = true
 		return nil
 	}}
-	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem) error {
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
 		return ErrStockInsufficientStock
 	}}
 
@@ -172,7 +175,7 @@ func TestPrintInvoiceService_WhenProductNotFoundInStock_ShouldReturnErrorAndNotU
 		statusCalled = true
 		return nil
 	}}
-	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem) error {
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
 		return ErrStockProductNotFound
 	}}
 

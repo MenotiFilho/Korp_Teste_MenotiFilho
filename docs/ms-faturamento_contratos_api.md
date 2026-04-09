@@ -118,6 +118,7 @@ Exemplo:
 ### Regras de negocio
 
 - so permite impressao de nota com status `ABERTA`
+- usa chave de idempotencia por nota no fluxo de impressao (`invoice-print-{id}`)
 - ao imprimir com sucesso:
   - chama `ms-estoque` para baixar saldo
   - atualiza status da nota para `FECHADA`

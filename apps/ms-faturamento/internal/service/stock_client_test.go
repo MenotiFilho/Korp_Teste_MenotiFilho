@@ -21,14 +21,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueReturns200_ShouldSucceed(t *testin
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 0)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 2},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-001")
 
 	// Assert
 	if err != nil {
@@ -45,14 +45,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueReturns404_ShouldReturnProductNotF
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 0)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-999", Quantidade: 1},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-002")
 
 	// Assert
 	if err == nil {
@@ -72,14 +72,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueReturns409_ShouldReturnInsufficien
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 0)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 999},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-003")
 
 	// Assert
 	if err == nil {
@@ -99,14 +99,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueReturns500_ShouldReturnEstoqueUnav
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 0)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 1},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-004")
 
 	// Assert
 	if err == nil {
@@ -125,14 +125,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueTimeout_ShouldReturnEstoqueUnavail
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 100*time.Millisecond, 0)
+	client := NewStockClient(server.URL, 100*time.Millisecond)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 1},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-005")
 
 	// Assert
 	if err == nil {
@@ -145,14 +145,14 @@ func TestStockClient_DecreaseStock_WhenEstoqueTimeout_ShouldReturnEstoqueUnavail
 
 func TestStockClient_DecreaseStock_WhenEstoqueUnreachable_ShouldReturnEstoqueUnavailableError(t *testing.T) {
 	// Arrange
-	client := NewStockClient("http://192.0.2.1:9999", 500*time.Millisecond, 0)
+	client := NewStockClient("http://192.0.2.1:9999", 500*time.Millisecond)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 1},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-006")
 
 	// Assert
 	if err == nil {
@@ -163,35 +163,29 @@ func TestStockClient_DecreaseStock_WhenEstoqueUnreachable_ShouldReturnEstoqueUna
 	}
 }
 
-func TestStockClient_DecreaseStock_When500WithRetry_ShouldRetryOnce(t *testing.T) {
+func TestStockClient_DecreaseStock_When500_ShouldReturnUnavailableWithoutRetry(t *testing.T) {
 	// Arrange
-	attempts := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		attempts++
-		if attempts == 1 {
-			w.WriteHeader(http.StatusInternalServerError)
-			_, _ = w.Write([]byte(`{"code":"INTERNAL_ERROR","message":"erro","request_id":"test"}`))
-			return
-		}
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"code":"INTERNAL_ERROR","message":"erro","request_id":"test"}`))
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 1)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 1},
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-007")
 
 	// Assert
-	if err != nil {
-		t.Fatalf("expected no error after retry, got %v", err)
+	if err == nil {
+		t.Fatal("expected error on 500 response")
 	}
-	if attempts != 2 {
-		t.Fatalf("expected 2 attempts, got %d", attempts)
+	if err != ErrEstoqueUnavailable {
+		t.Fatalf("expected ErrEstoqueUnavailable, got %v", err)
 	}
 }
 
@@ -209,12 +203,15 @@ func TestStockClient_DecreaseStock_WhenSentCorrectPayload_ShouldSendItemsInBody(
 		if r.URL.Path != "/api/v1/estoque/baixa" {
 			t.Errorf("expected /api/v1/estoque/baixa, got %s", r.URL.Path)
 		}
+		if r.Header.Get("Idempotency-Key") != "idem-008" {
+			t.Errorf("expected Idempotency-Key idem-008, got %s", r.Header.Get("Idempotency-Key"))
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}))
 	defer server.Close()
 
-	client := NewStockClient(server.URL, 2*time.Second, 0)
+	client := NewStockClient(server.URL, 2*time.Second)
 
 	items := []domain.StockDecreaseItem{
 		{Codigo: "P-001", Quantidade: 2},
@@ -222,7 +219,7 @@ func TestStockClient_DecreaseStock_WhenSentCorrectPayload_ShouldSendItemsInBody(
 	}
 
 	// Act
-	err := client.DecreaseStock(context.Background(), items)
+	err := client.DecreaseStock(context.Background(), items, "idem-008")
 
 	// Assert
 	if err != nil {

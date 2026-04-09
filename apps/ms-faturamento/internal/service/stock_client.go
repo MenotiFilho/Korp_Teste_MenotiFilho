@@ -22,16 +22,14 @@ var (
 type StockClient struct {
 	baseURL    string
 	httpClient *http.Client
-	maxRetries int
 }
 
-func NewStockClient(baseURL string, timeout time.Duration, maxRetries int) *StockClient {
+func NewStockClient(baseURL string, timeout time.Duration) *StockClient {
 	return &StockClient{
 		baseURL: baseURL,
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
-		maxRetries: maxRetries,
 	}
 }
 
@@ -49,7 +47,7 @@ type stockErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func (c *StockClient) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error {
+func (c *StockClient) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error {
 	payload := decreaseStockRequest{
 		Itens: make([]decreaseStockItemRequest, 0, len(items)),
 	}
@@ -66,33 +64,16 @@ func (c *StockClient) DecreaseStock(ctx context.Context, items []domain.StockDec
 	}
 
 	url := c.baseURL + "/api/v1/estoque/baixa"
-	maxAttempts := 1 + c.maxRetries
-
-	var lastErr error
-	for attempt := 0; attempt < maxAttempts; attempt++ {
-		lastErr = c.doRequest(ctx, url, body)
-		if lastErr == nil {
-			return nil
-		}
-
-		if !isTransientError(lastErr) {
-			return lastErr
-		}
-
-		if attempt < maxAttempts-1 {
-			time.Sleep(200 * time.Millisecond)
-		}
-	}
-
-	return lastErr
+	return c.doRequest(ctx, url, body, idempotencyKey)
 }
 
-func (c *StockClient) doRequest(ctx context.Context, url string, body []byte) error {
+func (c *StockClient) doRequest(ctx context.Context, url string, body []byte, idempotencyKey string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return ErrEstoqueUnavailable
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Idempotency-Key", idempotencyKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -123,8 +104,4 @@ func (c *StockClient) doRequest(ctx context.Context, url string, body []byte) er
 	}
 
 	return ErrEstoqueUnavailable
-}
-
-func isTransientError(err error) bool {
-	return errors.Is(err, ErrEstoqueUnavailable)
 }

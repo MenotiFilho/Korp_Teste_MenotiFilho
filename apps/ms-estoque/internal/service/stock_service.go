@@ -10,7 +10,7 @@ import (
 )
 
 type StockRepository interface {
-	DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error
+	DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error
 }
 
 type StockService struct {
@@ -26,7 +26,7 @@ func NewStockService(repo StockRepository) *StockService {
 	return &StockService{repo: repo}
 }
 
-func (s *StockService) DecreaseStock(ctx context.Context, inputs []StockDecreaseInput) error {
+func (s *StockService) DecreaseStock(ctx context.Context, inputs []StockDecreaseInput, idempotencyKey string) error {
 	items := make([]domain.StockDecreaseItem, 0, len(inputs))
 	for _, in := range inputs {
 		items = append(items, domain.StockDecreaseItem{
@@ -35,7 +35,7 @@ func (s *StockService) DecreaseStock(ctx context.Context, inputs []StockDecrease
 		})
 	}
 
-	return s.repo.DecreaseStock(ctx, items)
+	return s.repo.DecreaseStock(ctx, items, idempotencyKey)
 }
 
 func IsStockDomainError(err error) bool {

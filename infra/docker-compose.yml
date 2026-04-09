@@ -33,7 +33,7 @@ services:
     environment:
       PORT: "8082"
       DB_URL: "postgres://postgres:postgres@db-faturamento:5432/faturamento?sslmode=disable"
-      ESTOQUE_URL: "http://korp-ms-estoque:8081"
+      ESTOQUE_URL: "http://ms-estoque:8081"
       HTTP_READ_HEADER_TIMEOUT_SEC: "5"
       HTTP_MAX_HEADER_BYTES: "1048576"
       HTTP_MAX_BODY_BYTES: "1048576"

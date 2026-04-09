@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS estoque_baixas (
+    id BIGSERIAL PRIMARY KEY,
+    idempotency_key VARCHAR(128) NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

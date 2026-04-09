@@ -30,7 +30,7 @@ func TestProductRepository_DecreaseStock_WhenEnoughBalance_ShouldUpdateSaldo(t *
 	}
 
 	// Act
-	err = repo.DecreaseStock(ctx, []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}})
+	err = repo.DecreaseStock(ctx, []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}}, "idem-1")
 	if err != nil {
 		t.Fatalf("unexpected decrease error: %v", err)
 	}
@@ -65,7 +65,7 @@ func TestProductRepository_DecreaseStock_WhenInsufficientBalance_ShouldNotUpdate
 	}
 
 	// Act
-	err = repo.DecreaseStock(ctx, []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}})
+	err = repo.DecreaseStock(ctx, []domain.StockDecreaseItem{{Codigo: created.Codigo, Quantidade: 2}}, "idem-2")
 
 	// Assert
 	if !errors.Is(err, ErrProductInsufficientStock) {

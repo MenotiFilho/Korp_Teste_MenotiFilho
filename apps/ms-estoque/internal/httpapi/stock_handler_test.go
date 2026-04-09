@@ -13,26 +13,30 @@ import (
 )
 
 type stockDecreaserStub struct {
-	decreaseFn func(ctx context.Context, items []service.StockDecreaseInput) error
+	decreaseFn func(ctx context.Context, items []service.StockDecreaseInput, idempotencyKey string) error
 }
 
-func (s stockDecreaserStub) DecreaseStock(ctx context.Context, items []service.StockDecreaseInput) error {
-	return s.decreaseFn(ctx, items)
+func (s stockDecreaserStub) DecreaseStock(ctx context.Context, items []service.StockDecreaseInput, idempotencyKey string) error {
+	return s.decreaseFn(ctx, items, idempotencyKey)
 }
 
 func TestDecreaseStockHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, items []service.StockDecreaseInput) error {
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, items []service.StockDecreaseInput, idempotencyKey string) error {
 		if len(items) != 1 {
 			t.Fatalf("expected 1 item, got %d", len(items))
 		}
 		if items[0].Codigo != "P-001" || items[0].Quantidade != 2 {
 			t.Fatalf("unexpected item: %+v", items[0])
 		}
+		if idempotencyKey != "idem-abc" {
+			t.Fatalf("expected idempotency key idem-abc, got %q", idempotencyKey)
+		}
 		return nil
 	}}
 	h := NewStockHandler(svc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-001","quantidade":2}]}`)))
+	req.Header.Set("Idempotency-Key", "idem-abc")
 	rec := httptest.NewRecorder()
 
 	// Act
@@ -46,7 +50,7 @@ func TestDecreaseStockHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
 
 func TestDecreaseStockHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput) error { return nil }}
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error { return nil }}
 	h := NewStockHandler(svc)
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":`)))
 	rec := httptest.NewRecorder()
@@ -63,7 +67,7 @@ func TestDecreaseStockHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testin
 
 func TestDecreaseStockHandler_WhenInvalidItem_ShouldReturn400(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput) error {
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrInvalidDecreaseItem
 	}}
 	h := NewStockHandler(svc)
@@ -82,7 +86,7 @@ func TestDecreaseStockHandler_WhenInvalidItem_ShouldReturn400(t *testing.T) {
 
 func TestDecreaseStockHandler_WhenProductNotFound_ShouldReturn404(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput) error {
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrProductNotFound
 	}}
 	h := NewStockHandler(svc)
@@ -101,7 +105,7 @@ func TestDecreaseStockHandler_WhenProductNotFound_ShouldReturn404(t *testing.T) 
 
 func TestDecreaseStockHandler_WhenInsufficientStock_ShouldReturn409(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput) error {
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrProductInsufficientStock
 	}}
 	h := NewStockHandler(svc)
@@ -120,7 +124,7 @@ func TestDecreaseStockHandler_WhenInsufficientStock_ShouldReturn409(t *testing.T
 
 func TestDecreaseStockHandler_WhenUnexpectedError_ShouldReturn500(t *testing.T) {
 	// Arrange
-	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput) error {
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return errors.New("db timeout")
 	}}
 	h := NewStockHandler(svc)

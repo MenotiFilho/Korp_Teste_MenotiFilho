@@ -12,7 +12,7 @@ import (
 )
 
 type StockDecreaser interface {
-	DecreaseStock(ctx context.Context, items []service.StockDecreaseInput) error
+	DecreaseStock(ctx context.Context, items []service.StockDecreaseInput, idempotencyKey string) error
 }
 
 type StockHandler struct {
@@ -53,7 +53,8 @@ func (h *StockHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := h.service.DecreaseStock(r.Context(), inputs); err != nil {
+	idempotencyKey := r.Header.Get("Idempotency-Key")
+	if err := h.service.DecreaseStock(r.Context(), inputs, idempotencyKey); err != nil {
 		h.handleDecreaseError(w, r, err)
 		return
 	}

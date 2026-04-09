@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -18,6 +19,7 @@ var (
 	ErrProductNotFound          = errors.New("product not found")
 	ErrProductInsufficientStock = errors.New("product insufficient stock")
 	ErrInvalidDecreaseItem      = errors.New("invalid stock decrease item")
+	ErrIdempotencyKeyRequired   = errors.New("idempotency key is required")
 )
 
 type ProductRepository struct {
@@ -89,9 +91,14 @@ func isUniqueViolation(err error) bool {
 	return false
 }
 
-func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error {
+func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error {
 	if len(items) == 0 {
 		return nil
+	}
+
+	idempotencyKey = strings.TrimSpace(idempotencyKey)
+	if idempotencyKey == "" {
+		return ErrIdempotencyKeyRequired
 	}
 
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -100,11 +107,36 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 	}
 	defer tx.Rollback()
 
+	var alreadyApplied bool
+	err = tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM estoque_baixas WHERE idempotency_key = $1)`, idempotencyKey).Scan(&alreadyApplied)
+	if err != nil {
+		return err
+	}
+	if alreadyApplied {
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	normalized := make([]domain.StockDecreaseItem, 0, len(items))
 	for _, item := range items {
 		codigo := strings.TrimSpace(item.Codigo)
 		if codigo == "" || item.Quantidade <= 0 {
 			return ErrInvalidDecreaseItem
 		}
+		normalized = append(normalized, domain.StockDecreaseItem{Codigo: codigo, Quantidade: item.Quantidade})
+	}
+
+	sort.Slice(normalized, func(i, j int) bool {
+		if normalized[i].Codigo == normalized[j].Codigo {
+			return normalized[i].Quantidade < normalized[j].Quantidade
+		}
+		return normalized[i].Codigo < normalized[j].Codigo
+	})
+
+	for _, item := range normalized {
+		codigo := item.Codigo
 
 		var saldo int
 		err := tx.QueryRowContext(ctx, "SELECT saldo FROM produtos WHERE codigo = $1 FOR UPDATE", codigo).Scan(&saldo)
@@ -122,6 +154,10 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 		if _, err := tx.ExecContext(ctx, "UPDATE produtos SET saldo = saldo - $1 WHERE codigo = $2", item.Quantidade, codigo); err != nil {
 			return err
 		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `INSERT INTO estoque_baixas (idempotency_key) VALUES ($1)`, idempotencyKey); err != nil {
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {

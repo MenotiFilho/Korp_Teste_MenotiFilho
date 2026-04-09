@@ -46,7 +46,7 @@ func main() {
 	invoiceRepo := repository.NewInvoiceRepository(db)
 	invoiceService := service.NewInvoiceService(invoiceRepo)
 	invoiceHandler := httpapi.NewInvoiceHandler(invoiceService)
-	stockClient := service.NewStockClient(cfg.EstoqueURL, 2*time.Second, 1)
+	stockClient := service.NewStockClient(cfg.EstoqueURL, 2*time.Second)
 	printService := service.NewPrintInvoiceService(invoiceRepo, stockClient)
 	printHandler := httpapi.NewPrintInvoiceHandler(invoiceRepo, printService)
 	httpapi.RegisterInvoiceRoutes(mux, invoiceHandler)

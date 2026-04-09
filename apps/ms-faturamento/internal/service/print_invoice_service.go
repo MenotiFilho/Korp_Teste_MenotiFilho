@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
 )
@@ -14,7 +15,7 @@ type InvoiceUpdater interface {
 }
 
 type StockClientInterface interface {
-	DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem) error
+	DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error
 }
 
 type PrintInvoiceService struct {
@@ -35,7 +36,8 @@ func (s *PrintInvoiceService) Print(ctx context.Context, invoice domain.Invoice)
 	}
 
 	stockItems := invoice.StockDecreaseItems()
-	if err := s.stockClient.DecreaseStock(ctx, stockItems); err != nil {
+	idempotencyKey := fmt.Sprintf("invoice-print-%d", invoice.ID)
+	if err := s.stockClient.DecreaseStock(ctx, stockItems, idempotencyKey); err != nil {
 		return err
 	}
 

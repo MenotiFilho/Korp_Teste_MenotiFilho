@@ -76,7 +76,11 @@ docker compose -f ../../infra/docker-compose.yml down
 
 ## Variaveis de integracao
 
-- `ESTOQUE_URL` (default: `http://localhost:8081`) - URL base do ms-estoque
+- `ESTOQUE_URL` (default local: `http://localhost:8081`) - URL base do ms-estoque
+
+Observacao em Docker Compose:
+
+- usar `http://ms-estoque:8081` para comunicacao entre containers na mesma rede
 
 ## Endpoints disponiveis
 
