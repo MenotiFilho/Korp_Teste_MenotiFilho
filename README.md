@@ -90,10 +90,8 @@ Korp_Teste_MenotiFilho/
 │   ├── frontend/           # Angular 19
 │   ├── ms-estoque/         # Go — microsservico de estoque
 │   └── ms-faturamento/     # Go — microsservico de faturamento
-├── infra/
-│   └── docker-compose.yml
 ├── migrations/             # Scripts SQL
-├── docs/                   # Contratos de API
+├── docker-compose.yml
 ├── detalhamento.md         # Detalhamento tecnico
 └── README.md
 ```
