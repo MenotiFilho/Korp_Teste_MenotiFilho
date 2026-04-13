@@ -15,6 +15,7 @@ import (
 type InvoiceCreator interface {
 	CreateInvoice(ctx context.Context, items []domain.InvoiceItem) (domain.Invoice, error)
 	ListInvoices(ctx context.Context) ([]domain.Invoice, error)
+	ListLatest(ctx context.Context, limit int) ([]domain.Invoice, error)
 	UpdateInvoice(ctx context.Context, id int64, items []domain.InvoiceItem) (domain.Invoice, error)
 	DeleteInvoice(ctx context.Context, id int64) error
 }
@@ -114,9 +115,7 @@ func (h *InvoiceHandler) ListLatestInvoices(w http.ResponseWriter, r *http.Reque
 		limit = l
 	}
 
-	invoices, err := h.service.(interface {
-		ListLatest(context.Context, int) ([]domain.Invoice, error)
-	}).ListLatest(r.Context(), limit)
+	invoices, err := h.service.ListLatest(r.Context(), limit)
 	if err != nil {
 		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
 		return

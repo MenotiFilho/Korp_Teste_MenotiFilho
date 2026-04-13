@@ -15,6 +15,7 @@ import (
 type ProductCreator interface {
 	CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error)
 	ListProducts(ctx context.Context) ([]domain.Product, error)
+	ListLowStock(ctx context.Context, threshold, limit int) ([]domain.Product, error)
 	UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error)
 	DeleteProduct(ctx context.Context, id int64) error
 }
@@ -118,9 +119,7 @@ func (h *ProductHandler) ListLowStockProducts(w http.ResponseWriter, r *http.Req
 		limit = l
 	}
 
-	products, err := h.service.(interface {
-		ListLowStock(context.Context, int, int) ([]domain.Product, error)
-	}).ListLowStock(r.Context(), threshold, limit)
+	products, err := h.service.ListLowStock(r.Context(), threshold, limit)
 	if err != nil {
 		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
 		return
