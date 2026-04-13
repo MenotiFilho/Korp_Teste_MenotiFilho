@@ -130,20 +130,19 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
   imprimir(nota: Nota): void {
     if (nota.status !== 'ABERTA') return;
-    // Print flow will be implemented in Phase C. For now, call backend print endpoint via NotaService when available.
     this.loading = true;
-    this.notaService.listLatest().subscribe({ next: () => { /* noop */ }, error: () => {} });
-    // Keep mock behavior temporarily until Phase C fully implements print via backend
-    setTimeout(() => {
-      const result = this.mockData.imprimirNota(nota.id);
-      this.loading = false;
-      if (result.success) {
+    this.notaService.print(nota.id).subscribe({
+      next: () => {
+        this.loading = false;
         this.snackbar.success('Nota impressa com sucesso!');
         this.carregarNotas();
-      } else {
-        this.snackbar.error(result.error || 'Erro ao imprimir nota');
+      },
+      error: (err) => {
+        this.loading = false;
+        // Map known backend errors via ApiErrorMapper in the future; for now show backend message
+        this.snackbar.error('Erro ao imprimir nota: ' + (err?.error?.message || err?.message || 'erro desconhecido'));
       }
-    }, 1500);
+    });
   }
 
   excluir(nota: Nota): void {

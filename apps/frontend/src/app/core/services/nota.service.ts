@@ -19,4 +19,11 @@ export class NotaService {
       headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
     });
   }
+
+  print(id: number) {
+    const url = `${this.base}/api/v1/notas/${id}/imprimir`;
+    const idempotency = `invoice-print-${id}`;
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'Idempotency-Key': idempotency });
+    return this.http.post<void>(url, null, { headers });
+  }
 }

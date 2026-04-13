@@ -123,9 +123,9 @@ export class NotaFormComponent implements OnInit {
         this.snackbar.success('Nota fiscal criada com sucesso!');
         this.fechar();
       },
-    error: (err) => {
+      error: (err) => {
         // show error to user (no mock fallback)
-        this.snackbar.error('Falha ao criar nota: ' + (err?.message || 'erro desconhecido'));
+        this.snackbar.error('Falha ao criar nota: ' + (err?.error?.message || err?.message || 'erro desconhecido'));
       }
     });
   }
