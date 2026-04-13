@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Nota } from '../models/nota.model';
 import { environment } from '../../../environments/environment';
@@ -12,5 +12,11 @@ export class NotaService {
 
   listLatest(limit = 6): Observable<Nota[]> {
     return this.http.get<Nota[]>(`${this.base}/api/v1/notas/ultimas?limit=${limit}`);
+  }
+
+  create(itens: { produto_codigo: string; quantidade: number }[]) {
+    return this.http.post<Nota>(`${this.base}/api/v1/notas`, { itens }, {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+    });
   }
 }

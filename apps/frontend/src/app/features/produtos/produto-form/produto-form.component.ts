@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
+import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto } from '../../../core/models/produto.model';
 
 @Component({
@@ -37,7 +38,8 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private drawer: DrawerService,
     private snackbar: SnackbarService,
-    private mockData: MockDataService
+    private mockData: MockDataService,
+    private produtoService: ProdutoService
   ) {
     this.form = this.fb.group({
       codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -82,8 +84,15 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
       if (this.editMode && this.produtoEdicao) {
         this.snackbar.success('Produto atualizado com sucesso!');
       } else {
-        this.mockData.addProduto(this.form.value);
-        this.snackbar.success('Produto cadastrado com sucesso!');
+        const payload = this.form.value;
+        this.produtoService.create(payload).subscribe({
+          next: () => this.snackbar.success('Produto cadastrado com sucesso!'),
+          error: () => {
+            // fallback to mock when backend is unavailable
+            this.mockData.addProduto(payload);
+            this.snackbar.success('Produto cadastrado (modo offline)');
+          }
+        });
       }
       this.fechar();
     }

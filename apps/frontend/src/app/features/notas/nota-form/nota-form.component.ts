@@ -13,6 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
+import { NotaService } from '../../../core/services/nota.service';
 import { Produto } from '../../../core/models/produto.model';
 import { NotaItemsTableComponent, NotaItem } from '../../../shared/components/nota-items-table/nota-items-table.component';
 
@@ -48,7 +49,8 @@ export class NotaFormComponent implements OnInit {
     private fb: FormBuilder,
     private drawer: DrawerService,
     private snackbar: SnackbarService,
-    private mockData: MockDataService
+    private mockData: MockDataService,
+    private notaService: NotaService
   ) {
     this.form = this.fb.group({
       produto: [null, Validators.required],
@@ -115,13 +117,18 @@ export class NotaFormComponent implements OnInit {
       return;
     }
 
-    this.mockData.addNota(
-      this.itens.map((i) => ({
-        produto_codigo: i.produto_codigo,
-        quantidade: i.quantidade,
-      }))
-    );
-    this.snackbar.success('Nota fiscal criada com sucesso!');
-    this.fechar();
+    const payload = this.itens.map((i) => ({ produto_codigo: i.produto_codigo, quantidade: i.quantidade }));
+    this.notaService.create(payload).subscribe({
+      next: () => {
+        this.snackbar.success('Nota fiscal criada com sucesso!');
+        this.fechar();
+      },
+      error: () => {
+        // fallback to mock on error
+        this.mockData.addNota(payload);
+        this.snackbar.success('Nota fiscal criada (modo offline)');
+        this.fechar();
+      }
+    });
   }
 }
