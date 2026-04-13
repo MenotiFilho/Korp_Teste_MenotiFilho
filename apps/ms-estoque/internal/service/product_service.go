@@ -38,7 +38,7 @@ func (s *ProductService) ListProducts(ctx context.Context) ([]domain.Product, er
 // ListLowStock returns products with low stock using defaults if needed
 func (s *ProductService) ListLowStock(ctx context.Context, threshold, limit int) ([]domain.Product, error) {
 	if threshold <= 0 {
-		threshold = 6
+		threshold = 10
 	}
 	if limit <= 0 {
 		limit = 6

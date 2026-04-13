@@ -98,6 +98,31 @@ Observacao:
 
 - retorno ordenado por `id` ascendente.
 
+## 4) Produtos baixo estoque (novo)
+
+### Request
+
+- `GET /api/v1/produtos/baixo-estoque`
+- optional query params: `threshold` (default 10), `limit` (default 6)
+
+### Response (200)
+
+```json
+[
+  {
+    "id": 5,
+    "codigo": "POR-005",
+    "descricao": "Porca Mariposa M8",
+    "saldo": 1
+  }
+]
+```
+
+Regras:
+- retorna produtos com `saldo > 0` e `saldo < threshold`, ordenado por `saldo` asc (menor primeiro) e `id` asc como tiebreaker.
+- `threshold` default = 10
+- `limit` default = 6, max = 100
+
 ## 4) Baixa de estoque
 
 ### Request

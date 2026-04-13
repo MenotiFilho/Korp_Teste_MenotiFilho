@@ -101,6 +101,36 @@ Body:
 ]
 ```
 
+## 4) Últimas notas (novo)
+
+### Request
+
+- `GET /api/v1/notas/ultimas`
+- optional query params: `limit` (default 6)
+
+### Response (200)
+
+```json
+[
+  {
+    "id": 4,
+    "numero": 16,
+    "status": "ABERTA",
+    "itens": [
+      {
+        "id": 4,
+        "produto_codigo": "P-T13",
+        "quantidade": 2
+      }
+    ]
+  }
+]
+```
+
+Regras:
+- retorna notas ordenadas por `numero` desc (mais recente primeiro).
+- `limit` default = 6, max = 100
+
 ## 4) Imprimir nota fiscal
 
 ### Request
