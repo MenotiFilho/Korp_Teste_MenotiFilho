@@ -87,10 +87,9 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
         const payload = this.form.value;
         this.produtoService.create(payload).subscribe({
           next: () => this.snackbar.success('Produto cadastrado com sucesso!'),
-          error: () => {
-            // fallback to mock when backend is unavailable
-            this.mockData.addProduto(payload);
-            this.snackbar.success('Produto cadastrado (modo offline)');
+          error: (err) => {
+            // show error to user (no mock fallback)
+            this.snackbar.error('Falha ao cadastrar produto: ' + (err?.message || 'erro desconhecido'));
           }
         });
       }

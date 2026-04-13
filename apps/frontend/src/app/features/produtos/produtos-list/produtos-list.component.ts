@@ -62,10 +62,10 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   }
 
   carregarProdutos(): void {
-    // Phase A: read-only list from backend; fallback to mock on error
+    // Phase A/B: read-only list from backend — no mock fallback
     this.produtoService.listAll().subscribe({
-      next: (r) => { this.produtos = r; this.produtosFiltrados = [...r]; },
-      error: () => { this.produtos = this.mockData.getProdutos(); this.produtosFiltrados = [...this.produtos]; }
+      next: (r) => { this.produtos = r; this.produtosFiltradas = [...r]; },
+      error: (err) => { this.snackbar.error('Falha ao buscar produtos: ' + (err?.message || 'erro desconhecido')); }
     });
   }
 

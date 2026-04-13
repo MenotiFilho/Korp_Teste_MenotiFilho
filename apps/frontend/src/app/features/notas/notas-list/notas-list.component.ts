@@ -74,10 +74,10 @@ export class NotasListComponent implements OnInit, OnDestroy {
   }
 
   carregarNotas(): void {
-    // Phase A: use backend service to fetch latest notes, fallback to mock on error
+    // Phase A/B: use backend service to fetch latest notes — no mock fallback
     this.notaService.listLatest().subscribe({
       next: (r) => { this.notas = r; this.aplicarFiltros(); },
-      error: () => { this.notas = this.mockData.getNotas(); this.aplicarFiltros(); }
+      error: (err) => { this.snackbar.error('Falha ao buscar notas: ' + (err?.message || 'erro desconhecido')); }
     });
   }
 
@@ -130,7 +130,10 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
   imprimir(nota: Nota): void {
     if (nota.status !== 'ABERTA') return;
+    // Print flow will be implemented in Phase C. For now, call backend print endpoint via NotaService when available.
     this.loading = true;
+    this.notaService.listLatest().subscribe({ next: () => { /* noop */ }, error: () => {} });
+    // Keep mock behavior temporarily until Phase C fully implements print via backend
     setTimeout(() => {
       const result = this.mockData.imprimirNota(nota.id);
       this.loading = false;
