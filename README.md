@@ -1,19 +1,112 @@
-# Korp_Teste_MenotiFilho
+# Sistema de Emissao de Notas Fiscais
 
-Repositorio inicial do desafio tecnico Korp para emissao de notas fiscais com microsservicos.
+> Desafio tecnico Korp — MenotiFilho
 
-## Escopo inicial
+Sistema full-stack de emissao de notas fiscais com arquitetura de microsservicos,
+desenvolvido com Angular 19, Go 1.23 e PostgreSQL 16.
 
-- 2 microsservicos em Go
-- 2 bancos PostgreSQL (um por servico)
-- 1 frontend Angular (versao atual)
-- Docker desde o inicio
+## Funcionalidades
 
-## Status
+- Cadastro de produtos (codigo, descricao, saldo)
+- Cadastro de notas fiscais com multiplos produtos e quantidades
+- Edicao inline de notas abertas (adicionar, remover, alterar itens)
+- Impressao de notas com baixa automatica de estoque
+- Idempotencia: a mesma nota pode ser impressa varias vezes sem duplicar a baixa
+- Concorrencia: produto com saldo 1 sendo utilizado simultaneamente por duas notas
 
-Projeto inicializado com estrutura base. A implementacao sera conduzida em fases conforme o plano na raiz do workspace.
+## Arquitetura
 
-## Documentacao
+```
+┌───────────────┐
+│  Angular 19   │
+│  (Frontend)   │
+│  :4200        │
+└──┬────────┬───┘
+   │        L----------
+   |                   |
+   ▼                   ▼
+┌──────────────┐  ┌──────────────────┐
+│ ms-estoque   │  │ ms-faturamento   │
+│ :8081        │◄─│ :8082            │
+└────┬─────────┘  └────────┬─────────┘
+     │                     │
+┌────┴─────────┐  ┌────────┴─────────┐
+│ PostgreSQL   │  │ PostgreSQL       │
+│ estoque      │  │ faturamento      │
+│ :5433        │  │ :5434            │
+└──────────────┘  └──────────────────┘
+```
 
-- Contratos de API do `ms-estoque`: `docs/ms-estoque_contratos_api.md`
-- Contratos de API do `ms-faturamento`: `docs/ms-faturamento_contratos_api.md`
+O frontend se comunica diretamente com ambos os microsservicos. O
+ms-faturamento chama o ms-estoque via HTTP para realizar a baixa de
+estoque durante a impressao de notas.
+
+## Como Rodar
+
+### Pre-requisitos
+
+- Docker e Docker Compose
+- Git
+
+### Passos
+
+```bash
+# Clonar o repositorio
+git clone https://github.com/MenotiFilho/Korp_Teste_MenotiFilho.git
+cd Korp_Teste_MenotiFilho
+
+# Subir todos os servicos
+docker compose -f infra/docker-compose.yml up -d --build
+```
+
+### URLs
+
+| Servico | URL |
+|---------|-----|
+| Frontend | http://localhost:4200 |
+| ms-estoque | http://localhost:8081 |
+| ms-faturamento | http://localhost:8082 |
+
+### Parar
+
+```bash
+docker compose -f infra/docker-compose.yml down
+```
+
+### Reiniciar apos mudancas no codigo
+
+```bash
+docker compose -f infra/docker-compose.yml up -d --build
+```
+
+O frontend usa hot reload — alteracoes no codigo do Angular sao refletidas
+automaticamente via bind-mount.
+
+## Estrutura de Pastas
+
+```
+Korp_Teste_MenotiFilho/
+├── apps/
+│   ├── frontend/           # Angular 19
+│   ├── ms-estoque/         # Go — microsservico de estoque
+│   └── ms-faturamento/     # Go — microsservico de faturamento
+├── infra/
+│   └── docker-compose.yml
+├── migrations/             # Scripts SQL
+├── docs/                   # Contratos de API
+├── detalhamento.md         # Detalhamento tecnico
+└── README.md
+```
+
+## Testes
+
+```bash
+# Backend (ms-estoque)
+cd apps/ms-estoque && go test ./...
+
+# Backend (ms-faturamento)
+cd apps/ms-faturamento && go test ./...
+
+# Frontend
+cd apps/frontend && npm test
+```
