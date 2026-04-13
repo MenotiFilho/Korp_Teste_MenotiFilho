@@ -244,4 +244,12 @@ export class MockDataService {
     this.produtos$.next([...this.produtos]);
     return { success: true };
   }
+
+  deleteNota(id: number): boolean {
+    const index = this.notas.findIndex((n) => n.id === id);
+    if (index === -1) return false;
+    this.notas.splice(index, 1);
+    this.notas$.next([...this.notas]);
+    return true;
+  }
 }

@@ -152,8 +152,13 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.snackbar.success('Nota excluída com sucesso!');
-        this.carregarNotas();
+        const deleted = this.mockData.deleteNota(nota.id);
+        if (deleted) {
+          this.snackbar.success('Nota excluída com sucesso!');
+          this.carregarNotas();
+        } else {
+          this.snackbar.error('Erro ao excluir nota');
+        }
       }
     });
   }

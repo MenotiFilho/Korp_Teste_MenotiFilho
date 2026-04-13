@@ -51,4 +51,8 @@ export class DashboardComponent implements OnInit {
       year: 'numeric',
     });
   }
+
+  formatarNumero(num: number): string {
+    return String(num).padStart(5, '0');
+  }
 }

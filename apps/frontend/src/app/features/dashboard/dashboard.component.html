@@ -39,7 +39,7 @@
       <ng-container matColumnDef="numero">
         <th mat-header-cell *matHeaderCellDef>Número</th>
         <td mat-cell *matCellDef="let nota">
-          <span class="cell-mono">{{ nota.numero | number: '5.0-0' }}</span>
+          <span class="cell-mono">#{{ formatarNumero(nota.numero) }}</span>
         </td>
       </ng-container>
 
