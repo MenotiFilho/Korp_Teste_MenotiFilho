@@ -54,6 +54,29 @@ services:
       timeout: 3s
       retries: 10
 
+  frontend:
+    image: node:18-bullseye-slim
+    container_name: korp-frontend
+    working_dir: /usr/src/app
+    volumes:
+      - ../apps/frontend:/usr/src/app:delegated
+      - /usr/src/app/node_modules
+    environment:
+      CHOKIDAR_USEPOLLING: 'true'
+    ports:
+      - "4200:4200"
+    command: ["/bin/bash", "-lc", "npm ci --no-audit --no-fund && npm start -- --host 0.0.0.0 --poll=2000"]
+    depends_on:
+      ms-estoque:
+        condition: service_started
+      ms-faturamento:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4200/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
   db-estoque:
     image: postgres:16-alpine
     container_name: korp-db-estoque
