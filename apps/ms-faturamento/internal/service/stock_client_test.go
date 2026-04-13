@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -112,7 +113,7 @@ func TestStockClient_DecreaseStock_WhenEstoqueReturns500_ShouldReturnEstoqueUnav
 	if err == nil {
 		t.Fatal("expected error for internal server error")
 	}
-	if err != ErrEstoqueUnavailable {
+	if !errors.Is(err, ErrEstoqueUnavailable) {
 		t.Fatalf("expected ErrEstoqueUnavailable, got %v", err)
 	}
 }
@@ -138,7 +139,7 @@ func TestStockClient_DecreaseStock_WhenEstoqueTimeout_ShouldReturnEstoqueUnavail
 	if err == nil {
 		t.Fatal("expected error for timeout")
 	}
-	if err != ErrEstoqueUnavailable {
+	if !errors.Is(err, ErrEstoqueUnavailable) {
 		t.Fatalf("expected ErrEstoqueUnavailable, got %v", err)
 	}
 }
@@ -158,7 +159,7 @@ func TestStockClient_DecreaseStock_WhenEstoqueUnreachable_ShouldReturnEstoqueUna
 	if err == nil {
 		t.Fatal("expected error for unreachable service")
 	}
-	if err != ErrEstoqueUnavailable {
+	if !errors.Is(err, ErrEstoqueUnavailable) {
 		t.Fatalf("expected ErrEstoqueUnavailable, got %v", err)
 	}
 }
@@ -184,7 +185,7 @@ func TestStockClient_DecreaseStock_When500_ShouldReturnUnavailableWithoutRetry(t
 	if err == nil {
 		t.Fatal("expected error on 500 response")
 	}
-	if err != ErrEstoqueUnavailable {
+	if !errors.Is(err, ErrEstoqueUnavailable) {
 		t.Fatalf("expected ErrEstoqueUnavailable, got %v", err)
 	}
 }

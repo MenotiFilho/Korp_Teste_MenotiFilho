@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"syscall"
 	"time"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
@@ -22,6 +24,8 @@ var (
 type StockClient struct {
 	baseURL    string
 	httpClient *http.Client
+	circuit    *CircuitBreaker
+	retryDelay time.Duration
 }
 
 func NewStockClient(baseURL string, timeout time.Duration) *StockClient {
@@ -30,6 +34,8 @@ func NewStockClient(baseURL string, timeout time.Duration) *StockClient {
 		httpClient: &http.Client{
 			Timeout: timeout,
 		},
+		circuit:    NewCircuitBreaker(3, 10*time.Second),
+		retryDelay: 500 * time.Millisecond,
 	}
 }
 
@@ -48,6 +54,10 @@ type stockErrorResponse struct {
 }
 
 func (c *StockClient) DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error {
+	if err := c.circuit.Allow(); err != nil {
+		return ErrEstoqueUnavailable
+	}
+
 	payload := decreaseStockRequest{
 		Itens: make([]decreaseStockItemRequest, 0, len(items)),
 	}
@@ -64,7 +74,33 @@ func (c *StockClient) DecreaseStock(ctx context.Context, items []domain.StockDec
 	}
 
 	url := c.baseURL + "/api/v1/estoque/baixa"
-	return c.doRequest(ctx, url, body, idempotencyKey)
+	err = c.doRequest(ctx, url, body, idempotencyKey)
+	if err != nil {
+		if isTransientError(err) {
+			select {
+			case <-time.After(c.retryDelay):
+			case <-ctx.Done():
+				return ErrEstoqueUnavailable
+			}
+			err = c.doRequest(ctx, url, body, idempotencyKey)
+		}
+	}
+
+	if err != nil {
+		if isTransientError(err) {
+			c.circuit.RecordFailure()
+		}
+		return err
+	}
+
+	c.circuit.RecordSuccess()
+	return nil
+}
+
+func isTransientError(err error) bool {
+	return errors.Is(err, ErrEstoqueUnavailable) &&
+		!errors.Is(err, ErrStockProductNotFound) &&
+		!errors.Is(err, ErrStockInsufficientStock)
 }
 
 func (c *StockClient) doRequest(ctx context.Context, url string, body []byte, idempotencyKey string) error {
@@ -77,6 +113,9 @@ func (c *StockClient) doRequest(ctx context.Context, url string, body []byte, id
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
+		if isConnectionError(err) {
+			return fmt.Errorf("%w: connection error", ErrEstoqueUnavailable)
+		}
 		return ErrEstoqueUnavailable
 	}
 	defer resp.Body.Close()
@@ -104,4 +143,15 @@ func (c *StockClient) doRequest(ctx context.Context, url string, body []byte, id
 	}
 
 	return ErrEstoqueUnavailable
+}
+
+func isConnectionError(err error) bool {
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return true
+	}
+	if errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ECONNRESET) {
+		return true
+	}
+	return false
 }
