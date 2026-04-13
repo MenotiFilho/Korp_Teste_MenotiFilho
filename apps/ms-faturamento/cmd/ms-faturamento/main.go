@@ -18,6 +18,7 @@ import (
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/middleware"
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/service"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -51,7 +52,20 @@ func main() {
 	printHandler := httpapi.NewPrintInvoiceHandler(invoiceRepo, printService)
 	httpapi.RegisterInvoiceRoutes(mux, invoiceHandler)
 	httpapi.RegisterPrintInvoiceRoutes(mux, printHandler)
+	// Wrap mux with project middlewares first
 	handler := middleware.RequestID(middleware.Recover(middleware.MaxBodyBytes(cfg.MaxBodyBytes, middleware.Logger(mux))))
+
+	// Apply CORS using rs/cors so the frontend (localhost:4200) can call the APIs
+	c := cors.New(cors.Options{
+		// Allow all origins in development so other testers can access the APIs
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key"},
+		ExposedHeaders:   []string{"Content-Type"},
+		AllowCredentials: true,
+	})
+
+	handler = c.Handler(handler)
 
 	server := &http.Server{
 		Addr:              ":" + cfg.Port,
