@@ -6,6 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { ProdutoService } from '../../core/services/produto.service';
 import { NotaService } from '../../core/services/nota.service';
 import { Nota } from '../../core/models/nota.model';
+import { Nota } from '../../core/models/nota.model';
 import { Produto } from '../../core/models/produto.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
@@ -30,7 +31,7 @@ export class DashboardComponent implements OnInit {
   notasFechadas = 0;
   ultimasNotas: Nota[] = [];
   produtosBaixoEstoque: Produto[] = [];
-  displayedColumns = ['numero', 'itens', 'criado_em', 'status'];
+  displayedColumns = ['numero', 'itens', 'status'];
   estoqueColumns = ['codigo', 'descricao', 'saldo'];
 
   notasError = '';
@@ -87,17 +88,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  formatarData(iso: string | undefined): string {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  }
-
   formatarNumero(num: number): string {
     return String(num).padStart(5, '0');
+  }
+
+  totalItens(nota: Nota): number {
+    return nota.itens.reduce((sum, i) => sum + i.quantidade, 0);
   }
 }

@@ -1,55 +1,80 @@
 @if (nota) {
-  <div class="panel-header">
-    <span class="panel-title">Nota Fiscal #{{ formatarNumero(nota.numero) }}</span>
-    <button mat-icon-button (click)="fechar()">
-      <mat-icon>close</mat-icon>
-    </button>
+<div class="panel-header">
+  <span class="panel-title">Nota Fiscal #{{ formatarNumero(nota.numero) }}</span>
+  <button mat-icon-button (click)="fechar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+
+<div class="panel-body">
+  <div class="info-row">
+    <span class="info-label">Número</span>
+    <span class="info-value mono">#{{ formatarNumero(nota.numero) }}</span>
   </div>
 
-  <div class="panel-body">
-    <div class="info-row">
-      <span class="info-label">Número</span>
-      <span class="info-value mono">#{{ formatarNumero(nota.numero) }}</span>
+  <div class="info-row">
+    <span class="info-label">Status</span>
+    <app-status-badge [status]="nota.status" />
+  </div>
+  @if (editando) {
+  <div class="divider"></div>
+  <app-nota-item-adder [produtos]="produtos" (itemAdded)="onItemAdicionado($event)" />
+  }
+  <div class="divider"></div>
+
+  <span class="section-title">Itens da Nota</span>
+
+  <div class="items-list">
+    @for (item of itensEditaveis; track $index) {
+    <div class="item-row">
+      <span class="item-codigo mono">{{ item.produto_codigo }}</span>
+      <span class="item-nome">{{ getNomeProduto(item.produto_codigo) }}</span>
+      @if (editando) {
+      <input class="item-qty-input" type="number" min="1" [(ngModel)]="item.quantidade" />
+      } @else {
+      <span class="item-qtd">{{ item.quantidade }}</span>
+      }
+      @if (editando) {
+      <button mat-icon-button class="btn-remove" (click)="removerItem($index)">
+        <mat-icon>delete</mat-icon>
+      </button>
+      }
     </div>
+    }
 
-    <div class="info-row">
-      <span class="info-label">Status</span>
-      <app-status-badge [status]="nota.status" />
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">Criado em</span>
-      <span class="info-value">{{ formatarData(nota.criado_em) }}</span>
-    </div>
-
-    <div class="divider"></div>
-
-    <span class="section-title">Itens da Nota</span>
-
-    <app-nota-items-table
-      [itens]="nota.itens"
-      [produtoMap]="produtoMap"
-    />
+    @if (itensEditaveis.length === 0) {
+    <div class="item-empty">Nenhum item na nota</div>
+    }
   </div>
 
-  <div class="panel-footer">
-    <button mat-stroked-button (click)="fechar()">Fechar</button>
-    <button mat-flat-button class="btn-print" (click)="imprimir()"
-            [disabled]="nota.status !== 'ABERTA'">
-      <mat-icon>print</mat-icon>
-      Imprimir Nota
-    </button>
-  </div>
+  <span class="total-text">Total: {{ getTotalItens() }} itens</span>
+
+
+</div>
+
+<div class="panel-footer">
+  <button mat-stroked-button (click)="fechar()">Fechar</button>
+  @if (editando) {
+  <button mat-flat-button class="btn-save" (click)="salvar()" [disabled]="saving || itensEditaveis.length === 0">
+    <mat-icon>save</mat-icon>
+    {{ saving ? 'Salvando...' : 'Salvar' }}
+  </button>
+  <button mat-flat-button class="btn-print" (click)="imprimir()" [disabled]="itensEditaveis.length === 0">
+    <mat-icon>print</mat-icon>
+    Imprimir
+  </button>
+  }
+</div>
 } @else if (erroCarregamento) {
-  <div class="panel-header">
-    <span class="panel-title">Nota Fiscal</span>
-    <button mat-icon-button (click)="fechar()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </div>
-  <div class="panel-body">
-    <div class="panel-error">{{ erroCarregamento }}</div>
-  </div>
+<div class="panel-header">
+  <span class="panel-title">Nota Fiscal</span>
+  <button mat-icon-button (click)="fechar()">
+    <mat-icon>close</mat-icon>
+  </button>
+</div>
+<div class="panel-body">
+  <div class="panel-error">{{ erroCarregamento }}</div>
+</div>
 }
 
 <app-loading-overlay [visible]="loading" message="Processando impressão..." />

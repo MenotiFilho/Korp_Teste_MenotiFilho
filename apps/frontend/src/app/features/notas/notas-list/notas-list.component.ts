@@ -35,7 +35,7 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
   styleUrls: ['./notas-list.component.scss'],
 })
 export class NotasListComponent implements OnInit, OnDestroy {
-  displayedColumns = ['numero', 'itens', 'criado_em', 'status', '_visualizar', '_imprimir', '_excluir'];
+  displayedColumns = ['numero', 'itens', 'status', '_visualizar', '_imprimir', '_excluir'];
   pageSize = 10;
   pageIndex = 0;
   notas: Nota[] = [];
@@ -120,15 +120,12 @@ export class NotasListComponent implements OnInit, OnDestroy {
     this.pageSize = event.pageSize;
   }
 
-  formatarData(iso: string | undefined): string {
-    if (!iso) return '';
-    return new Date(iso).toLocaleDateString('pt-BR', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-    });
-  }
-
   formatarNumero(num: number): string {
     return String(num).padStart(5, '0');
+  }
+
+  totalItens(nota: Nota): number {
+    return nota.itens.reduce((sum, i) => sum + i.quantidade, 0);
   }
 
   abrirNovaNota(): void {

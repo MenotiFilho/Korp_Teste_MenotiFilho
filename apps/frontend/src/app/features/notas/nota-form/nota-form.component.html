@@ -6,30 +6,8 @@
 </div>
 
 <div class="drawer-body">
-  <!-- Add Item Form -->
-  <div class="add-item-form" [formGroup]="form">
-    <mat-form-field appearance="outline" class="field-produto">
-      <mat-label>Produto</mat-label>
-      <mat-select formControlName="produto" [compareWith]="compareProdutos">
-        @for (p of produtos; track p.id) {
-          <mat-option [value]="p">
-            {{ p.codigo }} - {{ p.descricao }} (Saldo: {{ p.saldo }})
-          </mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+  <app-nota-item-adder [produtos]="produtos" (itemAdded)="onItemAdicionado($event)" />
 
-    <mat-form-field appearance="outline" class="field-quantidade">
-      <mat-label>Qtd</mat-label>
-      <input matInput type="number" formControlName="quantidade" />
-    </mat-form-field>
-
-    <button class="btn-add" (click)="adicionarItem()" [disabled]="form.invalid">
-      <mat-icon>add</mat-icon>
-    </button>
-  </div>
-
-  <!-- Items Table -->
   @if (itens.length > 0) {
     <app-nota-items-table
       [itens]="itensParaTabela"

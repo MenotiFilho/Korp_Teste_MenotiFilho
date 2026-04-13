@@ -24,6 +24,12 @@ export class NotaService {
     });
   }
 
+  update(id: number, itens: { produto_codigo: string; quantidade: number }[]) {
+    return this.http.put<Nota>(`${this.base}/api/v1/notas/${id}`, { itens }, {
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+    });
+  }
+
   print(id: number) {
     const url = `${this.base}/api/v1/notas/${id}/imprimir`;
     const idempotency = `invoice-print-${id}`;

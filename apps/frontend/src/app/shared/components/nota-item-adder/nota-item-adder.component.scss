@@ -1,0 +1,28 @@
+.adder {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.field-produto {
+  flex: 1;
+}
+
+.field-qty {
+  width: 72px;
+}
+
+.btn-add {
+  margin-top: 4px;
+  color: var(--color-primary);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+  }
+}

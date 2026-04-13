@@ -9,5 +9,4 @@ export interface Nota {
   numero: number;
   status: 'ABERTA' | 'FECHADA';
   itens: NotaItem[];
-  criado_em?: string;
 }

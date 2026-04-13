@@ -1,0 +1,21 @@
+<div class="adder">
+  <mat-form-field appearance="outline" class="field-produto">
+    <mat-label>Produto</mat-label>
+    <mat-select [(ngModel)]="produtoSelecionado">
+      @for (p of produtos; track p.id) {
+        <mat-option [value]="p">
+          {{ p.codigo }} - {{ p.descricao }} (Saldo: {{ p.saldo }})
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="field-qty">
+    <mat-label>Qtd</mat-label>
+    <input matInput type="number" min="1" [(ngModel)]="quantidade" />
+  </mat-form-field>
+
+  <button mat-icon-button class="btn-add" (click)="adicionar()" [disabled]="!produtoSelecionado || quantidade < 1">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>
