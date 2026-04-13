@@ -1,0 +1,23 @@
+<div class="items-table">
+  <div class="items-header">
+    <div class="col-codigo">Código</div>
+    <div class="col-produto">Produto</div>
+    <div class="col-qtd">Qtd</div>
+    @if (hasRemover()) {
+      <div class="col-acao"></div>
+    }
+  </div>
+
+  @for (item of itens; track item.id) {
+    <div class="items-row">
+      <div class="col-codigo mono">{{ item.produto_codigo }}</div>
+      <div class="col-produto">{{ getNomeProduto(item.produto_codigo) }}</div>
+      <div class="col-qtd">{{ item.quantidade }}</div>
+      @if (hasRemover()) {
+        <div class="col-acao"></div>
+      }
+    </div>
+  }
+</div>
+
+<span class="total-text">Total: {{ getTotalItens() }} itens</span>

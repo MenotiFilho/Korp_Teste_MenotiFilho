@@ -24,14 +24,6 @@
   }
 }
 
-.saldo-warning {
-  color: var(--color-warning);
-}
-
-.saldo-error {
-  color: var(--color-error);
-}
-
 .btn-icon {
   display: flex;
   align-items: center;
@@ -53,9 +45,15 @@
   &.btn-delete mat-icon {
     color: var(--color-error);
   }
+
+  &.btn-disabled {
+    opacity: 0.3;
+    pointer-events: none;
+  }
 }
 
-::ng-deep .mat-column-_editar,
+::ng-deep .mat-column-_visualizar,
+::ng-deep .mat-column-_imprimir,
 ::ng-deep .mat-column-_excluir {
   text-align: center !important;
   width: 80px;

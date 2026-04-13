@@ -9,12 +9,14 @@
   <div class="field-group">
     <label class="field-label">Código *</label>
     <mat-form-field appearance="outline" class="field-input">
-      <input matInput formControlName="codigo" placeholder="Ex: PAR-001" />
-      @if (form.get('codigo')?.hasError('required') && form.get('codigo')?.touched) {
-        <mat-error>Código é obrigatório</mat-error>
-      }
-      @if (form.get('codigo')?.hasError('maxlength')) {
-        <mat-error>Máximo 20 caracteres</mat-error>
+      <input matInput formControlName="codigo" placeholder="Ex: PAR-001" [readonly]="editMode" />
+      @if (!editMode) {
+        @if (form.get('codigo')?.hasError('required') && form.get('codigo')?.touched) {
+          <mat-error>Código é obrigatório</mat-error>
+        }
+        @if (form.get('codigo')?.hasError('maxlength')) {
+          <mat-error>Máximo 20 caracteres</mat-error>
+        }
       }
     </mat-form-field>
   </div>

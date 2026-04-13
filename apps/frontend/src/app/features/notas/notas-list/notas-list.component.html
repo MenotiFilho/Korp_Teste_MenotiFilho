@@ -1,0 +1,84 @@
+<app-page-header title="Notas Fiscais" subtitle="Gerencie as notas fiscais emitidas">
+  <button class="btn-new" (click)="abrirNovaNota()">
+    <mat-icon>add</mat-icon>
+    <span>Nova Nota</span>
+  </button>
+</app-page-header>
+
+<app-data-table
+  searchPlaceholder="Buscar por número..."
+  [searchWidth]="320"
+  [filterOptions]="filterOptions"
+  filterPlaceholder="Todos"
+  [totalItems]="notasFiltradas.length"
+  [pageSize]="10"
+  (searchChange)="onSearch($event)"
+  (filterChange)="onFilter($event)"
+  (pageChange)="onPageChange($event)"
+>
+  <table mat-table [dataSource]="paginaAtual">
+    <ng-container matColumnDef="numero">
+      <th mat-header-cell *matHeaderCellDef>Número</th>
+      <td mat-cell *matCellDef="let n">
+        <span class="cell-mono">#{{ formatarNumero(n.numero) }}</span>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="itens">
+      <th mat-header-cell *matHeaderCellDef>Itens</th>
+      <td mat-cell *matCellDef="let n">
+        {{ n.itens.length }} {{ n.itens.length === 1 ? 'item' : 'itens' }}
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="criado_em">
+      <th mat-header-cell *matHeaderCellDef>Criado em</th>
+      <td mat-cell *matCellDef="let n">{{ formatarData(n.criado_em) }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let n">
+        <app-status-badge [status]="n.status" />
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="_visualizar">
+      <th mat-header-cell *matHeaderCellDef>Visualizar</th>
+      <td mat-cell *matCellDef="let n">
+        <div class="btn-icon" (click)="visualizar(n)" matTooltip="Visualizar">
+          <mat-icon>visibility</mat-icon>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="_imprimir">
+      <th mat-header-cell *matHeaderCellDef>Imprimir</th>
+      <td mat-cell *matCellDef="let n">
+        <div class="btn-icon"
+             (click)="imprimir(n)"
+             matTooltip="Imprimir"
+             [class.btn-disabled]="n.status !== 'ABERTA'">
+          <mat-icon>print</mat-icon>
+        </div>
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="_excluir">
+      <th mat-header-cell *matHeaderCellDef>Excluir</th>
+      <td mat-cell *matCellDef="let n">
+        <div class="btn-icon btn-delete"
+             (click)="excluir(n)"
+             matTooltip="Excluir"
+             [class.btn-disabled]="n.status !== 'ABERTA'">
+          <mat-icon>delete</mat-icon>
+        </div>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+  </table>
+</app-data-table>
+
+<app-loading-overlay [visible]="loading" message="Processando impressão..." />

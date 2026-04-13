@@ -5,6 +5,8 @@ import { SidebarComponent } from './shared/components/sidebar/sidebar.component'
 import { TopBarComponent } from './shared/components/top-bar/top-bar.component';
 import { DrawerService } from './shared/services/drawer.service';
 import { ProdutoFormComponent } from './features/produtos/produto-form/produto-form.component';
+import { NotaFormComponent } from './features/notas/nota-form/nota-form.component';
+import { NotaDetailComponent } from './features/notas/nota-detail/nota-detail.component';
 import { filter, map } from 'rxjs/operators';
 
 @Component({
@@ -15,6 +17,8 @@ import { filter, map } from 'rxjs/operators';
     SidebarComponent,
     TopBarComponent,
     ProdutoFormComponent,
+    NotaFormComponent,
+    NotaDetailComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',

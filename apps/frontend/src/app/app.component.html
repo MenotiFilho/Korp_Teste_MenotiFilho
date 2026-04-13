@@ -4,8 +4,14 @@
   </mat-sidenav>
 
   <mat-sidenav mode="over" position="end" [opened]="drawerOpen" (closed)="onDrawerClosed()">
-    @if (drawerComponent === 'produto-form') {
+    @if (drawerComponent === 'produto-form' || drawerComponent.startsWith('produto-edit-')) {
       <app-produto-form />
+    }
+    @if (drawerComponent === 'nota-form') {
+      <app-nota-form />
+    }
+    @if (drawerComponent.startsWith('nota-detail-')) {
+      <app-nota-detail />
     }
   </mat-sidenav>
 

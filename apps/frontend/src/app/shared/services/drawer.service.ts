@@ -30,4 +30,8 @@ export class DrawerService {
   get isOpen(): boolean {
     return this.state.value.open;
   }
+
+  get currentState(): DrawerState {
+    return this.state.value;
+  }
 }

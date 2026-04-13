@@ -93,12 +93,66 @@ export class MockDataService {
       criado_em: '2026-04-10T08:30:00',
       itens: [{ id: 10, produto_codigo: 'PAR-004', quantidade: 25 }],
     },
+    {
+      id: 7,
+      numero: 7,
+      status: 'FECHADA',
+      criado_em: '2026-04-10T10:00:00',
+      itens: [
+        { id: 11, produto_codigo: 'PAR-001', quantidade: 20 },
+        { id: 12, produto_codigo: 'POR-008', quantidade: 10 },
+      ],
+    },
+    {
+      id: 8,
+      numero: 8,
+      status: 'ABERTA',
+      criado_em: '2026-04-10T11:30:00',
+      itens: [{ id: 13, produto_codigo: 'ARR-003', quantidade: 15 }],
+    },
+    {
+      id: 9,
+      numero: 9,
+      status: 'FECHADA',
+      criado_em: '2026-04-10T14:00:00',
+      itens: [
+        { id: 14, produto_codigo: 'PAR-009', quantidade: 8 },
+        { id: 15, produto_codigo: 'POR-010', quantidade: 4 },
+        { id: 16, produto_codigo: 'ARR-011', quantidade: 12 },
+      ],
+    },
+    {
+      id: 10,
+      numero: 10,
+      status: 'ABERTA',
+      criado_em: '2026-04-11T09:15:00',
+      itens: [{ id: 17, produto_codigo: 'PAR-012', quantidade: 50 }],
+    },
+    {
+      id: 11,
+      numero: 11,
+      status: 'FECHADA',
+      criado_em: '2026-04-11T13:45:00',
+      itens: [
+        { id: 18, produto_codigo: 'POR-013', quantidade: 6 },
+        { id: 19, produto_codigo: 'ARR-014', quantidade: 20 },
+      ],
+    },
+    {
+      id: 12,
+      numero: 12,
+      status: 'ABERTA',
+      criado_em: '2026-04-11T16:00:00',
+      itens: [
+        { id: 20, produto_codigo: 'PAR-015', quantidade: 10 },
+      ],
+    },
   ];
 
   private nextProdutoId = 9;
-  private nextNotaId = 7;
-  private nextNotaNumero = 7;
-  private nextItemId = 11;
+  private nextNotaId = 13;
+  private nextNotaNumero = 13;
+  private nextItemId = 20;
 
   produtos$ = new BehaviorSubject<Produto[]>([...this.produtos]);
   notas$ = new BehaviorSubject<Nota[]>([...this.notas]);

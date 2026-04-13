@@ -1,0 +1,139 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  height: 100%;
+}
+
+// Toolbar
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-on-surface-variant);
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--color-on-surface);
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-on-surface-variant);
+    }
+  }
+}
+
+.status-filter {
+  position: relative;
+  width: 180px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+
+  mat-select {
+    width: 100%;
+  }
+
+  mat-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-on-surface-variant);
+    pointer-events: none;
+  }
+}
+
+// Table container
+.table-container {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+
+
+// Table host styles (applied to projected mat-table)
+::ng-deep table[mat-table] {
+  width: 100%;
+  background: transparent;
+
+  th.mat-mdc-header-cell {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+    height: 48px;
+    padding: 0 24px;
+    vertical-align: middle;
+  }
+
+  tr.mat-mdc-header-row {
+    background: var(--color-surface-bright);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  td.mat-mdc-cell {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    color: var(--color-on-surface);
+    height: 48px;
+    padding: 0 24px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .cell-mono {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+  }
+}
+
+// Paginator
+mat-paginator {
+  background: var(--color-surface-bright);
+  border-top: 1px solid var(--color-outline-variant);
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+::ng-deep .mat-mdc-paginator-page-size {
+  display: none !important;
+}
+
+::ng-deep .mat-mdc-paginator-container {
+  justify-content: flex-end;
+}
