@@ -58,6 +58,7 @@ func (r *ProductRepository) ListProducts(ctx context.Context) ([]domain.Product,
 	const query = `
 SELECT id, codigo, descricao, saldo
 FROM produtos
+WHERE deleted_at IS NULL
 ORDER BY id ASC
 `
 
@@ -81,6 +82,55 @@ ORDER BY id ASC
 	}
 
 	return products, nil
+}
+
+func (r *ProductRepository) UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
+	const query = `
+UPDATE produtos
+SET descricao = $1, saldo = $2, updated_at = NOW()
+WHERE id = $3 AND deleted_at IS NULL
+RETURNING id, codigo, descricao, saldo
+`
+
+	var out domain.Product
+	err := r.db.QueryRowContext(ctx, query, descricao, saldo, id).Scan(
+		&out.ID,
+		&out.Codigo,
+		&out.Descricao,
+		&out.Saldo,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return domain.Product{}, fmt.Errorf("%w: id=%d", ErrProductNotFound, id)
+		}
+		return domain.Product{}, err
+	}
+
+	return out, nil
+}
+
+func (r *ProductRepository) SoftDeleteProduct(ctx context.Context, id int64) error {
+	const query = `
+UPDATE produtos
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE id = $1 AND deleted_at IS NULL
+`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if affected == 0 {
+		return fmt.Errorf("%w: id=%d", ErrProductNotFound, id)
+	}
+
+	return nil
 }
 
 func isUniqueViolation(err error) bool {

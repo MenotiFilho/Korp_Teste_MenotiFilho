@@ -22,6 +22,8 @@ type createProductInput struct {
 type productCreatorStub struct {
 	createFn func(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error)
 	listFn   func(ctx context.Context) ([]domain.Product, error)
+	updateFn func(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error)
+	deleteFn func(ctx context.Context, id int64) error
 }
 
 func (s productCreatorStub) CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error) {
@@ -33,6 +35,14 @@ func (s productCreatorStub) ListProducts(ctx context.Context) ([]domain.Product,
 		return []domain.Product{}, nil
 	}
 	return s.listFn(ctx)
+}
+
+func (s productCreatorStub) UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
+	return s.updateFn(ctx, id, descricao, saldo)
+}
+
+func (s productCreatorStub) DeleteProduct(ctx context.Context, id int64) error {
+	return s.deleteFn(ctx, id)
 }
 
 func TestCreateProductHandler_WhenPayloadIsValid_ShouldReturn201WithProduct(t *testing.T) {
@@ -229,4 +239,167 @@ func assertErrorCode(t *testing.T, body []byte, expected string) {
 	if out.Code != expected {
 		t.Fatalf("expected error code %q, got %q", expected, out.Code)
 	}
+}
+
+func TestUpdateProductHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{updateFn: func(_ context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
+		return domain.Product{ID: id, Codigo: "P-001", Descricao: descricao, Saldo: saldo}, nil
+	}}
+	h := NewProductHandler(svc)
+	body := []byte(`{"descricao":"Produto Atualizado","saldo":25}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/produtos/1", bytes.NewReader(body))
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.UpdateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	var out productResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("expected valid JSON body, got %v", err)
+	}
+	if out.Descricao != "Produto Atualizado" || out.Saldo != 25 {
+		t.Fatalf("unexpected response: %+v", out)
+	}
+}
+
+func TestUpdateProductHandler_WhenIDIsInvalid_ShouldReturn400(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{}
+	h := NewProductHandler(svc)
+	body := []byte(`{"descricao":"Produto","saldo":10}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/produtos/abc", bytes.NewReader(body))
+	req.SetPathValue("id", "abc")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.UpdateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "VALIDATION_ERROR")
+}
+
+func TestUpdateProductHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/produtos/1", bytes.NewReader([]byte(`{"descricao":`)))
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.UpdateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "INVALID_JSON")
+}
+
+func TestUpdateProductHandler_WhenValidationFails_ShouldReturn400(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{updateFn: func(_ context.Context, _ int64, _ string, _ int) (domain.Product, error) {
+		return domain.Product{}, domain.ErrDescricaoRequired
+	}}
+	h := NewProductHandler(svc)
+	body := []byte(`{"descricao":"","saldo":10}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/produtos/1", bytes.NewReader(body))
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.UpdateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "VALIDATION_ERROR")
+}
+
+func TestUpdateProductHandler_WhenProductNotFound_ShouldReturn404(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{updateFn: func(_ context.Context, _ int64, _ string, _ int) (domain.Product, error) {
+		return domain.Product{}, repository.ErrProductNotFound
+	}}
+	h := NewProductHandler(svc)
+	body := []byte(`{"descricao":"Produto","saldo":10}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/produtos/999", bytes.NewReader(body))
+	req.SetPathValue("id", "999")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.UpdateProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "PRODUCT_NOT_FOUND")
+}
+
+func TestDeleteProductHandler_WhenProductExists_ShouldReturn204(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{deleteFn: func(_ context.Context, _ int64) error {
+		return nil
+	}}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/produtos/1", nil)
+	req.SetPathValue("id", "1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.DeleteProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected status %d, got %d", http.StatusNoContent, rec.Code)
+	}
+}
+
+func TestDeleteProductHandler_WhenIDIsInvalid_ShouldReturn400(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/produtos/abc", nil)
+	req.SetPathValue("id", "abc")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.DeleteProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "VALIDATION_ERROR")
+}
+
+func TestDeleteProductHandler_WhenProductNotFound_ShouldReturn404(t *testing.T) {
+	// Arrange
+	svc := productCreatorStub{deleteFn: func(_ context.Context, _ int64) error {
+		return repository.ErrProductNotFound
+	}}
+	h := NewProductHandler(svc)
+	req := httptest.NewRequest(http.MethodDelete, "/api/v1/produtos/999", nil)
+	req.SetPathValue("id", "999")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.DeleteProduct(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "PRODUCT_NOT_FOUND")
 }

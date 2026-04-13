@@ -9,6 +9,8 @@ import (
 type ProductRepository interface {
 	CreateProduct(ctx context.Context, p domain.Product) (domain.Product, error)
 	ListProducts(ctx context.Context) ([]domain.Product, error)
+	UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error)
+	SoftDeleteProduct(ctx context.Context, id int64) error
 }
 
 type ProductService struct {
@@ -30,4 +32,16 @@ func (s *ProductService) CreateProduct(ctx context.Context, codigo, descricao st
 
 func (s *ProductService) ListProducts(ctx context.Context) ([]domain.Product, error) {
 	return s.repo.ListProducts(ctx)
+}
+
+func (s *ProductService) UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
+	if err := domain.ValidateProductUpdate(descricao, saldo); err != nil {
+		return domain.Product{}, err
+	}
+
+	return s.repo.UpdateProduct(ctx, id, descricao, saldo)
+}
+
+func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
+	return s.repo.SoftDeleteProduct(ctx, id)
 }

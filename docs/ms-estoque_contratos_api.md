@@ -145,6 +145,69 @@ Body:
 - Nao e permitido saldo negativo.
 - `Idempotency-Key` e obrigatorio no endpoint de baixa.
 - Repeticao da mesma baixa com a mesma `Idempotency-Key` e no-op (nao debita novamente).
+- Produtos deletados (soft delete) nao aparecem nas listagens.
+
+## 5) Atualizar produto
+
+### Request
+
+- `PUT /api/v1/produtos/{id}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "descricao": "Produto 100 Atualizado",
+  "saldo": 25
+}
+```
+
+Observacao:
+
+- apenas `descricao` e `saldo` podem ser atualizados.
+- `codigo` e imutavel.
+
+### Response (200)
+
+```json
+{
+  "id": 3,
+  "codigo": "P-100",
+  "descricao": "Produto 100 Atualizado",
+  "saldo": 25
+}
+```
+
+### Erros comuns
+
+- `400 VALIDATION_ERROR` (id invalido)
+- `400 INVALID_JSON`
+- `400 VALIDATION_ERROR` (descricao vazia ou saldo negativo)
+- `404 PRODUCT_NOT_FOUND`
+- `413 PAYLOAD_TOO_LARGE`
+- `500 INTERNAL_ERROR`
+
+## 6) Deletar produto (soft delete)
+
+### Request
+
+- `DELETE /api/v1/produtos/{id}`
+
+### Response (204)
+
+- body vazio
+
+### Erros comuns
+
+- `400 VALIDATION_ERROR` (id invalido)
+- `404 PRODUCT_NOT_FOUND`
+- `500 INTERNAL_ERROR`
+
+### Observacao
+
+- soft delete: o registro e marcado com `deleted_at`, nao removido fisicamente.
+- produtos deletados nao aparecem em `GET /api/v1/produtos`.
 
 ## Comandos de validacao usados na Task 12
 

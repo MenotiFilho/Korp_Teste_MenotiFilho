@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -14,6 +15,8 @@ import (
 type ProductCreator interface {
 	CreateProduct(ctx context.Context, codigo, descricao string, saldo int) (domain.Product, error)
 	ListProducts(ctx context.Context) ([]domain.Product, error)
+	UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error)
+	DeleteProduct(ctx context.Context, id int64) error
 }
 
 type ProductHandler struct {
@@ -100,4 +103,80 @@ func (h *ProductHandler) handleCreateError(w http.ResponseWriter, r *http.Reques
 	}
 
 	WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+}
+
+type updateProductRequest struct {
+	Descricao string `json:"descricao"`
+	Saldo     int    `json:"saldo"`
+}
+
+func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := parseInt64(idStr)
+	if err != nil {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "id invalido", nil)
+		return
+	}
+
+	var req updateProductRequest
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&req); err != nil {
+		if strings.Contains(err.Error(), "http: request body too large") {
+			WriteError(w, r, http.StatusRequestEntityTooLarge, "PAYLOAD_TOO_LARGE", "payload excede limite permitido", nil)
+			return
+		}
+		WriteError(w, r, http.StatusBadRequest, "INVALID_JSON", "payload JSON invalido", nil)
+		return
+	}
+
+	product, err := h.service.UpdateProduct(r.Context(), id, req.Descricao, req.Saldo)
+	if err != nil {
+		if errors.Is(err, domain.ErrDescricaoRequired) || errors.Is(err, domain.ErrSaldoNegative) {
+			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "dados do produto invalidos", map[string]string{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, repository.ErrProductNotFound) {
+			WriteError(w, r, http.StatusNotFound, "PRODUCT_NOT_FOUND", "produto nao encontrado", nil)
+			return
+		}
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(productResponse{
+		ID:        product.ID,
+		Codigo:    product.Codigo,
+		Descricao: product.Descricao,
+		Saldo:     product.Saldo,
+	})
+}
+
+func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	idStr := r.PathValue("id")
+	id, err := parseInt64(idStr)
+	if err != nil {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "id invalido", nil)
+		return
+	}
+
+	err = h.service.DeleteProduct(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrProductNotFound) {
+			WriteError(w, r, http.StatusNotFound, "PRODUCT_NOT_FOUND", "produto nao encontrado", nil)
+			return
+		}
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func parseInt64(s string) (int64, error) {
+	var id int64
+	_, err := fmt.Sscanf(s, "%d", &id)
+	return id, err
 }

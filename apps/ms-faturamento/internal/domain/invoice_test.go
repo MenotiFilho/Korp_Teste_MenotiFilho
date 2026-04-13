@@ -187,3 +187,84 @@ func TestInvoice_StockDecreaseItems_ShouldMapItemsToCodesAndQuantities(t *testin
 		t.Fatalf("unexpected second item: %+v", result[1])
 	}
 }
+
+func TestValidateInvoiceUpdate_WhenStatusIsAbertaAndItemsValid_ShouldReturnNil(t *testing.T) {
+	// Arrange
+	status := StatusAberta
+	items := []InvoiceItem{
+		{ProdutoCodigo: "P-001", Quantidade: 2},
+	}
+
+	// Act
+	err := ValidateInvoiceUpdate(status, items)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestValidateInvoiceUpdate_WhenStatusIsFechada_ShouldReturnError(t *testing.T) {
+	// Arrange
+	status := StatusFechada
+	items := []InvoiceItem{
+		{ProdutoCodigo: "P-001", Quantidade: 2},
+	}
+
+	// Act
+	err := ValidateInvoiceUpdate(status, items)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for FECHADA status")
+	}
+	if err != ErrInvoiceNotAberta {
+		t.Fatalf("expected ErrInvoiceNotAberta, got %v", err)
+	}
+}
+
+func TestValidateInvoiceUpdate_WhenItemsEmpty_ShouldReturnError(t *testing.T) {
+	// Arrange
+	status := StatusAberta
+	items := []InvoiceItem{}
+
+	// Act
+	err := ValidateInvoiceUpdate(status, items)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for empty items")
+	}
+	if err != ErrInvoiceItemsRequired {
+		t.Fatalf("expected ErrInvoiceItemsRequired, got %v", err)
+	}
+}
+
+func TestValidateInvoiceDelete_WhenStatusIsAberta_ShouldReturnNil(t *testing.T) {
+	// Arrange
+	status := StatusAberta
+
+	// Act
+	err := ValidateInvoiceDelete(status)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestValidateInvoiceDelete_WhenStatusIsFechada_ShouldReturnError(t *testing.T) {
+	// Arrange
+	status := StatusFechada
+
+	// Act
+	err := ValidateInvoiceDelete(status)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for FECHADA status")
+	}
+	if err != ErrInvoiceNotAberta {
+		t.Fatalf("expected ErrInvoiceNotAberta, got %v", err)
+	}
+}

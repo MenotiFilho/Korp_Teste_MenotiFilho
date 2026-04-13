@@ -91,3 +91,25 @@ func (i *Invoice) StockDecreaseItems() []StockDecreaseItem {
 	}
 	return result
 }
+
+func ValidateInvoiceUpdate(status string, items []InvoiceItem) error {
+	if status != StatusAberta {
+		return ErrInvoiceNotAberta
+	}
+	if len(items) == 0 {
+		return ErrInvoiceItemsRequired
+	}
+	for _, item := range items {
+		if _, err := NewInvoiceItem(item.ProdutoCodigo, item.Quantidade); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ValidateInvoiceDelete(status string) error {
+	if status != StatusAberta {
+		return ErrInvoiceNotAberta
+	}
+	return nil
+}

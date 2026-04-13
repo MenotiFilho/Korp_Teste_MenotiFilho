@@ -76,3 +76,49 @@ func TestNewProduct_WhenSaldoIsNegative_ShouldReturnError(t *testing.T) {
 		t.Fatalf("expected ErrSaldoNegative, got %v", err)
 	}
 }
+
+func TestValidateProductUpdate_WhenInputIsValid_ShouldReturnNil(t *testing.T) {
+	// Arrange
+	descricao := "Produto atualizado"
+	saldo := 20
+
+	// Act
+	err := ValidateProductUpdate(descricao, saldo)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+}
+
+func TestValidateProductUpdate_WhenDescricaoIsEmpty_ShouldReturnError(t *testing.T) {
+	// Arrange
+	saldo := 20
+
+	// Act
+	err := ValidateProductUpdate("  ", saldo)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for empty descricao")
+	}
+	if err != ErrDescricaoRequired {
+		t.Fatalf("expected ErrDescricaoRequired, got %v", err)
+	}
+}
+
+func TestValidateProductUpdate_WhenSaldoIsNegative_ShouldReturnError(t *testing.T) {
+	// Arrange
+	descricao := "Produto atualizado"
+
+	// Act
+	err := ValidateProductUpdate(descricao, -1)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for negative saldo")
+	}
+	if err != ErrSaldoNegative {
+		t.Fatalf("expected ErrSaldoNegative, got %v", err)
+	}
+}
