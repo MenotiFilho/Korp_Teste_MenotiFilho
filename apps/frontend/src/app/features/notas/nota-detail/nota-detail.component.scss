@@ -34,6 +34,14 @@
   overflow-y: auto;
 }
 
+.panel-error {
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+  padding: 40px 0;
+}
+
 .info-row {
   display: flex;
   align-items: center;

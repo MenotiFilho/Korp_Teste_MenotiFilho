@@ -17,7 +17,7 @@ describe('NotaService print', () => {
 
   it('should post print with idempotency header', () => {
     service.print(123).subscribe();
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/notas/123/imprimir`);
+    const req = httpMock.expectOne(`${environment.faturamentoUrl}/api/v1/notas/123/imprimir`);
     expect(req.request.method).toBe('POST');
     expect(req.request.headers.get('Idempotency-Key')).toBe('invoice-print-123');
     req.flush(null);

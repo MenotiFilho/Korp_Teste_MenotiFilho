@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { MockDataService } from '../../core/services/mock-data.service';
+import { ProdutoService } from '../../core/services/produto.service';
+import { NotaService } from '../../core/services/nota.service';
 import { Nota } from '../../core/models/nota.model';
 import { Produto } from '../../core/models/produto.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
@@ -12,6 +14,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
   selector: 'app-dashboard',
   standalone: true,
   imports: [
+    CommonModule,
     RouterLink,
     MatIconModule,
     MatTableModule,
@@ -30,15 +33,58 @@ export class DashboardComponent implements OnInit {
   displayedColumns = ['numero', 'itens', 'criado_em', 'status'];
   estoqueColumns = ['codigo', 'descricao', 'saldo'];
 
-  constructor(private mockData: MockDataService) {}
+  notasError = '';
+  estoqueError = '';
+
+  constructor(
+    private produtoService: ProdutoService,
+    private notaService: NotaService
+  ) {}
 
   ngOnInit(): void {
-    const produtos = this.mockData.getProdutos();
-    this.totalProdutos = produtos.length;
-    this.notasAbertas = this.mockData.countByStatus('ABERTA');
-    this.notasFechadas = this.mockData.countByStatus('FECHADA');
-    this.ultimasNotas = this.mockData.getUltimasNotas(6);
-    this.produtosBaixoEstoque = this.mockData.getProdutosBaixoEstoque(6);
+    this.carregarProdutos();
+    this.carregarNotas();
+  }
+
+  private carregarProdutos(): void {
+    this.produtoService.listAll().subscribe({
+      next: (produtos) => {
+        this.totalProdutos = produtos.length;
+        this.estoqueError = '';
+      },
+      error: () => {
+        this.totalProdutos = 0;
+        this.estoqueError = 'Não foi possível carregar os produtos';
+      },
+    });
+
+    this.produtoService.listLowStock(6).subscribe({
+      next: (produtos) => {
+        this.produtosBaixoEstoque = produtos;
+        this.estoqueError = '';
+      },
+      error: () => {
+        this.produtosBaixoEstoque = [];
+        this.estoqueError = 'Não foi possível carregar os produtos com baixo estoque';
+      },
+    });
+  }
+
+  private carregarNotas(): void {
+    this.notaService.listLatest(6).subscribe({
+      next: (notas) => {
+        this.ultimasNotas = notas;
+        this.notasAbertas = notas.filter((n) => n.status === 'ABERTA').length;
+        this.notasFechadas = notas.filter((n) => n.status === 'FECHADA').length;
+        this.notasError = '';
+      },
+      error: () => {
+        this.ultimasNotas = [];
+        this.notasAbertas = 0;
+        this.notasFechadas = 0;
+        this.notasError = 'Não foi possível carregar as notas';
+      },
+    });
   }
 
   formatarData(iso: string | undefined): string {

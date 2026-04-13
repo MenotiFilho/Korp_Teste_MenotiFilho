@@ -13,7 +13,8 @@
   (searchChange)="onSearch($event)"
   (pageChange)="onPageChange($event)"
 >
-  <table mat-table [dataSource]="paginaAtual">
+  <div class="table-error" *ngIf="erroCarregamento">{{ erroCarregamento }}</div>
+  <table mat-table [dataSource]="paginaAtual" *ngIf="!erroCarregamento">
     <ng-container matColumnDef="codigo">
       <th mat-header-cell *matHeaderCellDef>Código</th>
       <td mat-cell *matCellDef="let p">

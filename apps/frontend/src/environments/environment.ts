@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  // API base URL used by frontend during development
-  apiUrl: 'http://localhost:8080'
+  estoqueUrl: 'http://localhost:8081',
+  faturamentoUrl: 'http://localhost:8082',
 };

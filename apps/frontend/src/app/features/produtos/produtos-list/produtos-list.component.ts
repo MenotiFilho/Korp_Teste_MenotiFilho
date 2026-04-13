@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Produto } from '../../../core/models/produto.model';
@@ -19,6 +19,7 @@ import { DrawerService } from '../../../shared/services/drawer.service';
   selector: 'app-produtos-list',
   standalone: true,
   imports: [
+    CommonModule,
     MatIconModule,
     MatTableModule,
     MatTooltipModule,
@@ -36,11 +37,11 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   pageIndex = 0;
   produtos: Produto[] = [];
   produtosFiltrados: Produto[] = [];
+  erroCarregamento = '';
 
   private drawerSub!: Subscription;
 
   constructor(
-    private mockData: MockDataService,
     private produtoService: ProdutoService,
     private dialog: MatDialog,
     private snackbar: SnackbarService,
@@ -65,10 +66,17 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   }
 
   carregarProdutos(): void {
-    // Phase A/B: read-only list from backend — no mock fallback
     this.produtoService.listAll().subscribe({
-      next: (r) => { this.produtos = r; this.produtosFiltrados = [...r]; },
-      error: (err) => { const mapped = this.apiErrorMapper.map(err); this.snackbar.error('Falha ao buscar produtos: ' + mapped.message); }
+      next: (r) => {
+        this.produtos = r;
+        this.produtosFiltrados = [...r];
+        this.erroCarregamento = '';
+      },
+      error: () => {
+        this.produtos = [];
+        this.produtosFiltrados = [];
+        this.erroCarregamento = 'Não foi possível carregar os produtos';
+      },
     });
   }
 
@@ -107,9 +115,16 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        this.produtos = this.produtos.filter((p) => p.id !== produto.id);
-        this.onSearch(this.searchTerm);
-        this.snackbar.success('Produto excluído com sucesso!');
+        this.produtoService.delete(produto.id).subscribe({
+          next: () => {
+            this.snackbar.success('Produto excluído com sucesso!');
+            this.carregarProdutos();
+          },
+          error: (err) => {
+            const mapped = this.apiErrorMapper.map(err);
+            this.snackbar.error('Falha ao excluir produto: ' + mapped.message);
+          },
+        });
       }
     });
   }

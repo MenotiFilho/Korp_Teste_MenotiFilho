@@ -17,7 +17,7 @@ describe('NotaService', () => {
 
   it('should request listLatest with default limit', () => {
     service.listLatest().subscribe();
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/notas/ultimas?limit=6`);
+    const req = httpMock.expectOne(`${environment.faturamentoUrl}/api/v1/notas/ultimas?limit=6`);
     expect(req.request.method).toBe('GET');
     req.flush([]);
   });

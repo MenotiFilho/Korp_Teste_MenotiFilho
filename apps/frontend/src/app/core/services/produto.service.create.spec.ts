@@ -18,7 +18,7 @@ describe('ProdutoService create', () => {
   it('should post create produto', () => {
     const payload = { codigo: 'P-999', descricao: 'Teste', saldo: 5 };
     service.create(payload as any).subscribe();
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/produtos`);
+    const req = httpMock.expectOne(`${environment.estoqueUrl}/api/v1/produtos`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(payload);
     req.flush({ id: 100, ...payload });

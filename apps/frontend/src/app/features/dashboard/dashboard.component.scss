@@ -95,6 +95,14 @@
   }
 }
 
+.table-error {
+  padding: var(--spacing-lg);
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+}
+
 .section-table {
   width: 100%;
   background: transparent;

@@ -6,12 +6,16 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class NotaService {
-  private base = environment.apiUrl;
+  private base = environment.faturamentoUrl;
 
   constructor(private http: HttpClient) {}
 
   listLatest(limit = 6): Observable<Nota[]> {
     return this.http.get<Nota[]>(`${this.base}/api/v1/notas/ultimas?limit=${limit}`);
+  }
+
+  listAll(): Observable<Nota[]> {
+    return this.http.get<Nota[]>(`${this.base}/api/v1/notas`);
   }
 
   create(itens: { produto_codigo: string; quantidade: number }[]) {
@@ -25,5 +29,9 @@ export class NotaService {
     const idempotency = `invoice-print-${id}`;
     const headers = new HttpHeaders({ 'Content-Type': 'application/json', 'Idempotency-Key': idempotency });
     return this.http.post<void>(url, null, { headers });
+  }
+
+  delete(id: number) {
+    return this.http.delete<void>(`${this.base}/api/v1/notas/${id}`);
   }
 }

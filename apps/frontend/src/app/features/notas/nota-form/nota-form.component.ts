@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { ProdutoService } from '../../../core/services/produto.service';
 import { NotaService } from '../../../core/services/nota.service';
 import { Produto } from '../../../core/models/produto.model';
 import { NotaItemsTableComponent, NotaItem } from '../../../shared/components/nota-items-table/nota-items-table.component';
@@ -51,7 +51,7 @@ export class NotaFormComponent implements OnInit {
     private fb: FormBuilder,
     private drawer: DrawerService,
     private snackbar: SnackbarService,
-    private mockData: MockDataService,
+    private produtoService: ProdutoService,
     private notaService: NotaService,
     private apiErrorMapper: ApiErrorMapper
   ) {
@@ -62,8 +62,16 @@ export class NotaFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.produtos = this.mockData.getProdutos().filter((p) => p.saldo > 0);
-    this.produtos.forEach(p => this.produtoMap.set(p.codigo, p.descricao));
+    this.produtoService.listAll().subscribe({
+      next: (produtos) => {
+        this.produtos = produtos.filter((p) => p.saldo > 0);
+        this.produtoMap.clear();
+        this.produtos.forEach((p) => this.produtoMap.set(p.codigo, p.descricao));
+      },
+      error: () => {
+        this.produtos = [];
+      },
+    });
   }
 
   get produtoSelecionado(): Produto | null {

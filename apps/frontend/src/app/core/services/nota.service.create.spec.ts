@@ -18,7 +18,7 @@ describe('NotaService create', () => {
   it('should post create nota', () => {
     const itens = [{ produto_codigo: 'P-001', quantidade: 2 }];
     service.create(itens).subscribe();
-    const req = httpMock.expectOne(`${environment.apiUrl}/api/v1/notas`);
+    const req = httpMock.expectOne(`${environment.faturamentoUrl}/api/v1/notas`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ itens });
     req.flush({ id: 50, numero: 101, status: 'ABERTA', itens });

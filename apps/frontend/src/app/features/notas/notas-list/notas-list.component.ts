@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { NotaService } from '../../../core/services/nota.service';
 import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Nota } from '../../../core/models/nota.model';
@@ -21,6 +21,7 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
   selector: 'app-notas-list',
   standalone: true,
   imports: [
+    CommonModule,
     MatIconModule,
     MatTableModule,
     MatTooltipModule,
@@ -42,6 +43,7 @@ export class NotasListComponent implements OnInit, OnDestroy {
   loading = false;
   searchTerm = '';
   statusFilter = '';
+  erroCarregamento = '';
 
   filterOptions: FilterOption[] = [
     { value: '', label: 'Todos' },
@@ -52,7 +54,6 @@ export class NotasListComponent implements OnInit, OnDestroy {
   private drawerSub!: Subscription;
 
   constructor(
-    private mockData: MockDataService,
     private notaService: NotaService,
     private drawer: DrawerService,
     private dialog: MatDialog,
@@ -77,10 +78,17 @@ export class NotasListComponent implements OnInit, OnDestroy {
   }
 
   carregarNotas(): void {
-    // Phase A/B: use backend service to fetch latest notes — no mock fallback
     this.notaService.listLatest().subscribe({
-      next: (r) => { this.notas = r; this.aplicarFiltros(); },
-      error: (err) => { const mapped = this.apiErrorMapper.map(err); this.snackbar.error('Falha ao buscar notas: ' + mapped.message); }
+      next: (r) => {
+        this.notas = r;
+        this.erroCarregamento = '';
+        this.aplicarFiltros();
+      },
+      error: () => {
+        this.notas = [];
+        this.notasFiltradas = [];
+        this.erroCarregamento = 'Não foi possível carregar as notas';
+      },
     });
   }
 
@@ -162,13 +170,16 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((confirmed) => {
       if (confirmed) {
-        const deleted = this.mockData.deleteNota(nota.id);
-        if (deleted) {
-          this.snackbar.success('Nota excluída com sucesso!');
-          this.carregarNotas();
-        } else {
-          this.snackbar.error('Erro ao excluir nota');
-        }
+        this.notaService.delete(nota.id).subscribe({
+          next: () => {
+            this.snackbar.success('Nota excluída com sucesso!');
+            this.carregarNotas();
+          },
+          error: (err) => {
+            const mapped = this.apiErrorMapper.map(err);
+            this.snackbar.error('Falha ao excluir nota: ' + mapped.message);
+          },
+        });
       }
     });
   }

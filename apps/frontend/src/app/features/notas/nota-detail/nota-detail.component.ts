@@ -4,7 +4,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { Subscription } from 'rxjs';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
-import { MockDataService } from '../../../core/services/mock-data.service';
+import { NotaService } from '../../../core/services/nota.service';
+import { ProdutoService } from '../../../core/services/produto.service';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { Nota } from '../../../core/models/nota.model';
@@ -20,19 +21,22 @@ import { NotaItemsTableComponent } from '../../../shared/components/nota-items-t
 export class NotaDetailComponent implements OnInit, OnDestroy {
   nota: Nota | null = null;
   loading = false;
+  erroCarregamento = '';
+  private produtoMapCache = new Map<string, string>();
   private sub!: Subscription;
 
   constructor(
     private drawer: DrawerService,
     private snackbar: SnackbarService,
-    private mockData: MockDataService
+    private notaService: NotaService,
+    private produtoService: ProdutoService
   ) {}
 
   ngOnInit(): void {
     this.sub = this.drawer.state$.subscribe((state) => {
       if (state.open && state.component.startsWith('nota-detail-')) {
         const notaId = parseInt(state.component.replace('nota-detail-', ''), 10);
-        this.nota = this.mockData.getNotas().find((n) => n.id === notaId) ?? null;
+        this.carregarNota(notaId);
       }
     });
   }
@@ -41,10 +45,33 @@ export class NotaDetailComponent implements OnInit, OnDestroy {
     this.sub?.unsubscribe();
   }
 
+  private carregarNota(id: number): void {
+    this.erroCarregamento = '';
+    this.nota = null;
+
+    this.produtoService.listAll().subscribe({
+      next: (produtos) => {
+        this.produtoMapCache.clear();
+        produtos.forEach((p) => this.produtoMapCache.set(p.codigo, p.descricao));
+      },
+      error: () => {},
+    });
+
+    this.notaService.listAll().subscribe({
+      next: (notas) => {
+        this.nota = notas.find((n) => n.id === id) ?? null;
+        if (!this.nota) {
+          this.erroCarregamento = 'Nota não encontrada';
+        }
+      },
+      error: () => {
+        this.erroCarregamento = 'Não foi possível carregar a nota';
+      },
+    });
+  }
+
   get produtoMap(): Map<string, string> {
-    const map = new Map<string, string>();
-    this.mockData.getProdutos().forEach((p) => map.set(p.codigo, p.descricao));
-    return map;
+    return this.produtoMapCache;
   }
 
   get showRemover(): boolean {
@@ -71,15 +98,16 @@ export class NotaDetailComponent implements OnInit, OnDestroy {
   imprimir(): void {
     if (!this.nota || this.nota.status !== 'ABERTA') return;
     this.loading = true;
-    setTimeout(() => {
-      const result = this.mockData.imprimirNota(this.nota!.id);
-      this.loading = false;
-      if (result.success) {
+    this.notaService.print(this.nota.id).subscribe({
+      next: () => {
+        this.loading = false;
         this.snackbar.success('Nota impressa com sucesso!');
-        this.nota = this.mockData.getNotas().find((n) => n.id === this.nota!.id) ?? null;
-      } else {
-        this.snackbar.error(result.error || 'Erro ao imprimir nota');
-      }
-    }, 1500);
+        this.carregarNota(this.nota!.id);
+      },
+      error: () => {
+        this.loading = false;
+        this.snackbar.error('Erro ao imprimir nota');
+      },
+    });
   }
 }

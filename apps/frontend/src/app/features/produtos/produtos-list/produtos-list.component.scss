@@ -2,6 +2,14 @@
   display: block;
 }
 
+.table-error {
+  padding: var(--spacing-lg);
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  color: var(--color-on-surface-variant);
+}
+
 .btn-new {
   display: flex;
   align-items: center;

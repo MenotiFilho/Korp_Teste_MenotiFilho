@@ -40,6 +40,16 @@
       Imprimir Nota
     </button>
   </div>
+} @else if (erroCarregamento) {
+  <div class="panel-header">
+    <span class="panel-title">Nota Fiscal</span>
+    <button mat-icon-button (click)="fechar()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div class="panel-body">
+    <div class="panel-error">{{ erroCarregamento }}</div>
+  </div>
 }
 
 <app-loading-overlay [visible]="loading" message="Processando impressão..." />

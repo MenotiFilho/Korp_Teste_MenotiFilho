@@ -12,7 +12,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { Subscription } from 'rxjs';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
-import { MockDataService } from '../../../core/services/mock-data.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto } from '../../../core/models/produto.model';
 import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
@@ -40,7 +39,6 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private drawer: DrawerService,
     private snackbar: SnackbarService,
-    private mockData: MockDataService,
     private produtoService: ProdutoService,
     private apiErrorMapper: ApiErrorMapper
   ) {
@@ -56,12 +54,19 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
       if (state.open) {
         if (state.component.startsWith('produto-edit-')) {
           const id = parseInt(state.component.replace('produto-edit-', ''), 10);
-          const produto = this.mockData.getProdutos().find((p) => p.id === id);
-          if (produto) {
-            this.editMode = true;
-            this.produtoEdicao = produto;
-            this.form.patchValue(produto);
-          }
+          this.produtoService.listAll().subscribe({
+            next: (produtos) => {
+              const produto = produtos.find((p) => p.id === id);
+              if (produto) {
+                this.editMode = true;
+                this.produtoEdicao = produto;
+                this.form.patchValue(produto);
+              }
+            },
+            error: () => {
+              this.snackbar.error('Não foi possível carregar o produto');
+            },
+          });
         } else if (state.component === 'produto-form') {
           this.editMode = false;
           this.produtoEdicao = null;
@@ -85,18 +90,31 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
   salvar(): void {
     if (this.form.valid) {
       if (this.editMode && this.produtoEdicao) {
-        this.snackbar.success('Produto atualizado com sucesso!');
-      } else {
-        const payload = this.form.value;
-        this.produtoService.create(payload).subscribe({
-          next: () => this.snackbar.success('Produto cadastrado com sucesso!'),
+        const { descricao, saldo } = this.form.value;
+        this.produtoService.update(this.produtoEdicao.id, { descricao, saldo }).subscribe({
+          next: () => {
+            this.snackbar.success('Produto atualizado com sucesso!');
+            this.fechar();
+          },
           error: (err) => {
             const mapped = this.apiErrorMapper.map(err);
-            this.snackbar.error(`Falha ao cadastrar produto: ${mapped.message}`);
-          }
+            this.snackbar.error(`Falha ao atualizar produto: ${mapped.message}`);
+          },
         });
+        return;
       }
-      this.fechar();
+
+      const payload = this.form.value;
+      this.produtoService.create(payload).subscribe({
+        next: () => {
+          this.snackbar.success('Produto cadastrado com sucesso!');
+          this.fechar();
+        },
+        error: (err) => {
+          const mapped = this.apiErrorMapper.map(err);
+          this.snackbar.error(`Falha ao cadastrar produto: ${mapped.message}`);
+        },
+      });
     }
   }
 }
