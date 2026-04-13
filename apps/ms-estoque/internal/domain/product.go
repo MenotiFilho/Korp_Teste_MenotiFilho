@@ -38,3 +38,16 @@ func NewProduct(codigo, descricao string, saldo int) (Product, error) {
 		Saldo:     saldo,
 	}, nil
 }
+
+func ValidateProductUpdate(descricao string, saldo int) error {
+	descricao = strings.TrimSpace(descricao)
+
+	if descricao == "" {
+		return ErrDescricaoRequired
+	}
+	if saldo < 0 {
+		return ErrSaldoNegative
+	}
+
+	return nil
+}

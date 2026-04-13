@@ -139,6 +139,91 @@ Exemplo:
 - `503 ESTOQUE_UNAVAILABLE`
 - `500 INTERNAL_ERROR`
 
+## 5) Atualizar nota fiscal
+
+### Request
+
+- `PUT /api/v1/notas/{id}`
+- `Content-Type: application/json`
+
+Body:
+
+```json
+{
+  "itens": [
+    {
+      "produto_codigo": "P-T13",
+      "quantidade": 6
+    },
+    {
+      "produto_codigo": "P-001",
+      "quantidade": 2
+    }
+  ]
+}
+```
+
+### Response (200)
+
+```json
+{
+  "id": 3,
+  "numero": 15,
+  "status": "ABERTA",
+  "itens": [
+    {
+      "id": 10,
+      "produto_codigo": "P-T13",
+      "quantidade": 6
+    },
+    {
+      "id": 11,
+      "produto_codigo": "P-001",
+      "quantidade": 2
+    }
+  ]
+}
+```
+
+### Regras de negocio
+
+- so permite atualizacao de nota com status `ABERTA`
+- os itens antigos sao substituidos pelos novos
+- nota com status `FECHADA` retorna erro `409`
+
+### Erros comuns
+
+- `400 VALIDATION_ERROR` (id invalido)
+- `400 INVALID_JSON`
+- `400 VALIDATION_ERROR` (itens vazios ou invalidos)
+- `404 INVOICE_NOT_FOUND`
+- `409 INVOICE_NOT_ABERTA`
+- `500 INTERNAL_ERROR`
+
+## 6) Deletar nota fiscal (soft delete)
+
+### Request
+
+- `DELETE /api/v1/notas/{id}`
+
+### Response (204)
+
+- body vazio
+
+### Regras de negocio
+
+- so permite exclusao de nota com status `ABERTA`
+- nota com status `FECHADA` retorna erro `409`
+- soft delete: o registro e marcado com `deleted_at`, nao removido fisicamente
+- notas deletadas nao aparecem em `GET /api/v1/notas`
+
+### Erros comuns
+
+- `400 VALIDATION_ERROR` (id invalido)
+- `404 INVOICE_NOT_FOUND`
+- `409 INVOICE_NOT_ABERTA`
+- `500 INTERNAL_ERROR`
+
 ## Fluxo de falha obrigatorio (demonstrado)
 
 Cenario validado na Task 13:

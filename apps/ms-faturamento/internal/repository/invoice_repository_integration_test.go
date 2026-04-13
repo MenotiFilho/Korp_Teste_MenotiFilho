@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"os"
 	"testing"
 
@@ -130,6 +131,101 @@ func TestInvoiceRepository_UpdateStatus_WhenInvoiceNotFound_ShouldReturnError(t 
 	// Assert
 	if err == nil {
 		t.Fatal("expected error for non-existent invoice")
+	}
+}
+
+func TestInvoiceRepository_UpdateInvoiceItems_ShouldReplaceItems(t *testing.T) {
+	// Arrange
+	db := openTestDB(t)
+	repo := NewInvoiceRepository(db)
+	ctx := context.Background()
+
+	items := []domain.InvoiceItem{
+		{ProdutoCodigo: "P-001", Quantidade: 2},
+		{ProdutoCodigo: "P-002", Quantidade: 5},
+	}
+	invoice, _ := domain.NewInvoice(items)
+	created, _ := repo.CreateInvoice(ctx, invoice)
+
+	newItems := []domain.InvoiceItem{
+		{ProdutoCodigo: "P-003", Quantidade: 10},
+	}
+
+	// Act
+	updated, err := repo.UpdateInvoiceItems(ctx, created.ID, newItems)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected update error: %v", err)
+	}
+	if len(updated.Itens) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(updated.Itens))
+	}
+	if updated.Itens[0].ProdutoCodigo != "P-003" || updated.Itens[0].Quantidade != 10 {
+		t.Fatalf("unexpected item: %+v", updated.Itens[0])
+	}
+}
+
+func TestInvoiceRepository_UpdateInvoiceItems_WhenInvoiceNotFound_ShouldReturnError(t *testing.T) {
+	// Arrange
+	db := openTestDB(t)
+	repo := NewInvoiceRepository(db)
+	ctx := context.Background()
+
+	newItems := []domain.InvoiceItem{
+		{ProdutoCodigo: "P-001", Quantidade: 1},
+	}
+
+	// Act
+	_, err := repo.UpdateInvoiceItems(ctx, 99999, newItems)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for non-existent invoice")
+	}
+	if !errors.Is(err, ErrInvoiceNotFound) {
+		t.Fatalf("expected ErrInvoiceNotFound, got %v", err)
+	}
+}
+
+func TestInvoiceRepository_SoftDeleteInvoice_ShouldSetDeletedAt(t *testing.T) {
+	// Arrange
+	db := openTestDB(t)
+	repo := NewInvoiceRepository(db)
+	ctx := context.Background()
+
+	items := []domain.InvoiceItem{{ProdutoCodigo: "P-001", Quantidade: 1}}
+	invoice, _ := domain.NewInvoice(items)
+	created, _ := repo.CreateInvoice(ctx, invoice)
+
+	// Act
+	err := repo.SoftDeleteInvoice(ctx, created.ID)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("unexpected delete error: %v", err)
+	}
+	invoices, _ := repo.ListInvoices(ctx)
+	if len(invoices) != 0 {
+		t.Fatalf("expected 0 invoices after soft delete, got %d", len(invoices))
+	}
+}
+
+func TestInvoiceRepository_SoftDeleteInvoice_WhenInvoiceNotFound_ShouldReturnError(t *testing.T) {
+	// Arrange
+	db := openTestDB(t)
+	repo := NewInvoiceRepository(db)
+	ctx := context.Background()
+
+	// Act
+	err := repo.SoftDeleteInvoice(ctx, 99999)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error for non-existent invoice")
+	}
+	if !errors.Is(err, ErrInvoiceNotFound) {
+		t.Fatalf("expected ErrInvoiceNotFound, got %v", err)
 	}
 }
 
