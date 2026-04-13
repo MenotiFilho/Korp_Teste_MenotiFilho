@@ -1,40 +1,40 @@
-# Sistema de Emissao de Notas Fiscais
+# Desafio tecnico Korp — Menoti Filho
 
-> Desafio tecnico Korp — MenotiFilho
+##  Sistema de Emissao de Notas Fiscais
 
 Sistema full-stack de emissao de notas fiscais com arquitetura de microsservicos,
 desenvolvido com Angular 19, Go 1.23 e PostgreSQL 16.
 
 ## Funcionalidades
 
-- Cadastro de produtos (codigo, descricao, saldo)
-- Cadastro de notas fiscais com multiplos produtos e quantidades
-- Edicao inline de notas abertas (adicionar, remover, alterar itens)
+- Dashboard com informacoes rápidas sobre os serviços de faturamento e estoque
+- CRUD de produtos (codigo, descricao, saldo)
+- CRUD de notas fiscais com multiplos produtos e quantidades
 - Impressao de notas com baixa automatica de estoque
-- Idempotencia: a mesma nota pode ser impressa varias vezes sem duplicar a baixa
-- Concorrencia: produto com saldo 1 sendo utilizado simultaneamente por duas notas
 
 ## Arquitetura
 
 ```
-┌───────────────┐
-│  Angular 19   │
-│  (Frontend)   │
-│  :4200        │
-└──┬────────┬───┘
-   │        L----------
-   |                   |
-   ▼                   ▼
-┌──────────────┐  ┌──────────────────┐
-│ ms-estoque   │  │ ms-faturamento   │
-│ :8081        │◄─│ :8082            │
-└────┬─────────┘  └────────┬─────────┘
-     │                     │
-┌────┴─────────┐  ┌────────┴─────────┐
-│ PostgreSQL   │  │ PostgreSQL       │
-│ estoque      │  │ faturamento      │
-│ :5433        │  │ :5434            │
-└──────────────┘  └──────────────────┘
+graph TD
+    subgraph Frontend
+        A[Angular 19<br/>Porta: 4200]
+    end
+
+    subgraph Microservices
+        B[ms-estoque<br/>Porta: 8081]
+        C[ms-faturamento<br/>Porta: 8082]
+    end
+
+    subgraph Databases
+        D[(PostgreSQL<br/>estoque: 5433)]
+        E[(PostgreSQL<br/>faturamento: 5434)]
+    end
+
+    A --> B
+    A --> C
+    C --> B
+    B --> D
+    C --> E
 ```
 
 O frontend se comunica diretamente com ambos os microsservicos. O
