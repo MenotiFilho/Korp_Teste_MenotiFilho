@@ -107,8 +107,8 @@ Comandos úteis
    - `cd apps/frontend && npm install && npm run start` (ou `ng serve` conforme package.json)
 
 Checklist de implementação (para assinalar ao concluir)
- - [ ] rs/cors adicionado e configurado em ms-estoque
- - [ ] rs/cors adicionado e configurado em ms-faturamento
+ - [x] rs/cors adicionado e configurado em ms-estoque
+ - [x] rs/cors adicionado e configurado em ms-faturamento
  - [ ] ProdutoService implementado e integrado aos componentes
  - [ ] NotaService implementado e integrado aos componentes
  - [ ] ApiErrorMapper implementado e usado nos componentes
