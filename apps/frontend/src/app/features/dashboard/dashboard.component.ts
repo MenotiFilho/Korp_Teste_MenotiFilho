@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProdutoService } from '../../core/services/produto.service';
 import { NotaService } from '../../core/services/nota.service';
 import { Nota } from '../../core/models/nota.model';
@@ -25,6 +26,8 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
   styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   totalProdutos = 0;
   notasAbertas = 0;
   notasFechadas = 0;
@@ -47,7 +50,9 @@ export class DashboardComponent implements OnInit {
   }
 
   private carregarProdutos(): void {
-    this.produtoService.listAll().subscribe({
+    this.produtoService.listAll().pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (produtos) => {
         this.totalProdutos = produtos.length;
         this.estoqueError = '';
@@ -58,7 +63,9 @@ export class DashboardComponent implements OnInit {
       },
     });
 
-    this.produtoService.listLowStock(6).subscribe({
+    this.produtoService.listLowStock(6).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (produtos) => {
         this.produtosBaixoEstoque = produtos;
         this.estoqueError = '';
@@ -71,7 +78,9 @@ export class DashboardComponent implements OnInit {
   }
 
   private carregarNotas(): void {
-    this.notaService.listLatest(6).subscribe({
+    this.notaService.listLatest(6).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (notas) => {
         this.ultimasNotas = notas;
         this.notasAbertas = notas.filter((n) => n.status === 'ABERTA').length;
