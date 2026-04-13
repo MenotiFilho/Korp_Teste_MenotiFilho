@@ -77,5 +77,10 @@ func (h *PrintInvoiceHandler) handlePrintError(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+	if errors.Is(err, service.ErrPrintStatusUpdateFailed) {
+		WriteError(w, r, http.StatusInternalServerError, "PRINT_STATUS_UPDATE_FAILED", "impressao realizada mas falha ao atualizar status, tente novamente", nil)
+		return
+	}
+
 	WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
 }

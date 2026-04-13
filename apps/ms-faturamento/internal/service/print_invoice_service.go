@@ -2,10 +2,14 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
 )
+
+var ErrPrintStatusUpdateFailed = errors.New("print succeeded but status update failed")
 
 type InvoiceUpdater interface {
 	UpdateStatus(ctx context.Context, id int64, status string) error
@@ -34,12 +38,17 @@ func (s *PrintInvoiceService) Print(ctx context.Context, invoice domain.Invoice)
 
 	stockItems := invoice.StockDecreaseItems()
 	idempotencyKey := fmt.Sprintf("invoice-print-%d", invoice.ID)
-	if err := s.stockClient.DecreaseStock(ctx, stockItems, idempotencyKey); err != nil {
-		return err
+	stockErr := s.stockClient.DecreaseStock(ctx, stockItems, idempotencyKey)
+	if stockErr != nil {
+		return stockErr
 	}
 
-	if err := s.invoiceRepo.UpdateStatus(ctx, invoice.ID, domain.StatusFechada); err != nil {
-		return err
+	statusErr := s.invoiceRepo.UpdateStatus(ctx, invoice.ID, domain.StatusFechada)
+	if statusErr != nil {
+		if errors.Is(statusErr, repository.ErrInvoiceAlreadyClosed) {
+			return nil
+		}
+		return ErrPrintStatusUpdateFailed
 	}
 
 	return nil

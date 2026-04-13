@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
 )
 
 type invoiceRepoStub struct {
@@ -200,5 +202,72 @@ func TestPrintInvoiceService_WhenProductNotFoundInStock_ShouldReturnErrorAndNotU
 	}
 	if statusCalled {
 		t.Fatal("expected status to NOT be updated when stock fails")
+	}
+}
+
+func TestPrintInvoiceService_WhenUpdateStatusReturnsAlreadyClosed_ShouldReturnSuccess(t *testing.T) {
+	// Arrange
+	stockCalled := false
+	repo := invoiceRepoStub{updateStatusFn: func(_ context.Context, _ int64, _ string) error {
+		return fmt.Errorf("%w: id=1", repository.ErrInvoiceAlreadyClosed)
+	}}
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
+		stockCalled = true
+		return nil
+	}}
+
+	svc := NewPrintInvoiceService(repo, stock)
+
+	invoice := domain.Invoice{
+		ID:     1,
+		Numero: 100,
+		Status: domain.StatusAberta,
+		Itens:  []domain.InvoiceItem{{ID: 1, NotaID: 1, ProdutoCodigo: "P-001", Quantidade: 2}},
+	}
+
+	// Act
+	err := svc.Print(context.Background(), invoice)
+
+	// Assert
+	if err != nil {
+		t.Fatalf("expected no error (race condition handled), got %v", err)
+	}
+	if !stockCalled {
+		t.Fatal("expected stock client to be called")
+	}
+}
+
+func TestPrintInvoiceService_WhenUpdateStatusFailsAfterStockSucceeds_ShouldReturnPartialFailure(t *testing.T) {
+	// Arrange
+	stockCalled := false
+	repo := invoiceRepoStub{updateStatusFn: func(_ context.Context, _ int64, _ string) error {
+		return fmt.Errorf("db timeout")
+	}}
+	stock := stockClientStub{decreaseFn: func(_ context.Context, _ []domain.StockDecreaseItem, _ string) error {
+		stockCalled = true
+		return nil
+	}}
+
+	svc := NewPrintInvoiceService(repo, stock)
+
+	invoice := domain.Invoice{
+		ID:     1,
+		Numero: 100,
+		Status: domain.StatusAberta,
+		Itens:  []domain.InvoiceItem{{ID: 1, NotaID: 1, ProdutoCodigo: "P-001", Quantidade: 2}},
+	}
+
+	// Act
+	err := svc.Print(context.Background(), invoice)
+
+	// Assert
+	if err == nil {
+		t.Fatal("expected error when status update fails")
+	}
+	if err != ErrPrintStatusUpdateFailed {
+		t.Fatalf("expected ErrPrintStatusUpdateFailed, got %v", err)
+	}
+	if !stockCalled {
+		t.Fatal("expected stock client to be called")
 	}
 }

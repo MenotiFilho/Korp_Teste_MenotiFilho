@@ -10,6 +10,7 @@ import (
 )
 
 var ErrInvoiceNotFound = errors.New("invoice not found")
+var ErrInvoiceAlreadyClosed = errors.New("invoice already closed")
 
 type InvoiceRepository struct {
 	db *sql.DB
@@ -238,7 +239,7 @@ WHERE id = $1 AND deleted_at IS NULL
 }
 
 func (r *InvoiceRepository) UpdateStatus(ctx context.Context, id int64, status string) error {
-	const query = `UPDATE notas SET status = $1 WHERE id = $2 AND deleted_at IS NULL`
+	const query = `UPDATE notas SET status = $1, updated_at = NOW() WHERE id = $2 AND status = 'ABERTA' AND deleted_at IS NULL`
 
 	result, err := r.db.ExecContext(ctx, query, status, id)
 	if err != nil {
@@ -251,6 +252,13 @@ func (r *InvoiceRepository) UpdateStatus(ctx context.Context, id int64, status s
 	}
 
 	if affected == 0 {
+		inv, getErr := r.GetInvoiceByID(ctx, id)
+		if getErr != nil {
+			return getErr
+		}
+		if inv.Status == domain.StatusFechada {
+			return fmt.Errorf("%w: id=%d", ErrInvoiceAlreadyClosed, id)
+		}
 		return fmt.Errorf("%w: id=%d", ErrInvoiceNotFound, id)
 	}
 

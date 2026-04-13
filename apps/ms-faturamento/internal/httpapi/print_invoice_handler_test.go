@@ -202,6 +202,34 @@ func TestPrintInvoiceHandler_WhenInvalidID_ShouldReturn400(t *testing.T) {
 	assertErrorCode(t, rec.Body.Bytes(), "VALIDATION_ERROR")
 }
 
+func TestPrintInvoiceHandler_WhenStatusUpdateFailsAfterStockSucceeds_ShouldReturn500WithSpecificCode(t *testing.T) {
+	// Arrange
+	loader := invoiceLoaderStub{getByIDFn: func(_ context.Context, id int64) (domain.Invoice, error) {
+		return domain.Invoice{
+			ID:     id,
+			Numero: 100,
+			Status: domain.StatusAberta,
+			Itens:  []domain.InvoiceItem{{ID: 1, NotaID: id, ProdutoCodigo: "P-001", Quantidade: 2}},
+		}, nil
+	}}
+	printer := printServiceStub{printFn: func(_ context.Context, _ domain.Invoice) error {
+		return service.ErrPrintStatusUpdateFailed
+	}}
+
+	h := NewPrintInvoiceHandler(loader, printer)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/notas/1/imprimir", nil)
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.PrintInvoice(rec, req, "1")
+
+	// Assert
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "PRINT_STATUS_UPDATE_FAILED")
+}
+
 func TestPrintInvoiceHandler_WhenUnexpectedError_ShouldReturn500(t *testing.T) {
 	// Arrange
 	loader := invoiceLoaderStub{getByIDFn: func(_ context.Context, _ int64) (domain.Invoice, error) {
