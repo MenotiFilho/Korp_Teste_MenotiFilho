@@ -42,7 +42,8 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
     private produtoService: ProdutoService,
     private dialog: MatDialog,
     private snackbar: SnackbarService,
-    private drawer: DrawerService
+    private drawer: DrawerService,
+    private apiErrorMapper: ApiErrorMapper
   ) {}
 
   ngOnInit(): void {
@@ -65,7 +66,7 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
     // Phase A/B: read-only list from backend — no mock fallback
     this.produtoService.listAll().subscribe({
       next: (r) => { this.produtos = r; this.produtosFiltradas = [...r]; },
-      error: (err) => { this.snackbar.error('Falha ao buscar produtos: ' + (err?.message || 'erro desconhecido')); }
+      error: (err) => { const mapped = this.apiErrorMapper.map(err); this.snackbar.error('Falha ao buscar produtos: ' + mapped.message); }
     });
   }
 

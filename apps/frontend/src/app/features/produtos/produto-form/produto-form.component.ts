@@ -39,7 +39,8 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
     private drawer: DrawerService,
     private snackbar: SnackbarService,
     private mockData: MockDataService,
-    private produtoService: ProdutoService
+    private produtoService: ProdutoService,
+    private apiErrorMapper: ApiErrorMapper
   ) {
     this.form = this.fb.group({
       codigo: ['', [Validators.required, Validators.maxLength(20)]],
@@ -88,8 +89,8 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
         this.produtoService.create(payload).subscribe({
           next: () => this.snackbar.success('Produto cadastrado com sucesso!'),
           error: (err) => {
-            // show error to user (no mock fallback)
-            this.snackbar.error('Falha ao cadastrar produto: ' + (err?.message || 'erro desconhecido'));
+            const mapped = this.apiErrorMapper.map(err);
+            this.snackbar.error(`Falha ao cadastrar produto: ${mapped.message}`);
           }
         });
       }

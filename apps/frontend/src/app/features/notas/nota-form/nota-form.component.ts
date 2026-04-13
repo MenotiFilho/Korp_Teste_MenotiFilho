@@ -124,8 +124,8 @@ export class NotaFormComponent implements OnInit {
         this.fechar();
       },
       error: (err) => {
-        // show error to user (no mock fallback)
-        this.snackbar.error('Falha ao criar nota: ' + (err?.error?.message || err?.message || 'erro desconhecido'));
+        const mapped = this.apiErrorMapper.map(err);
+        this.snackbar.error('Falha ao criar nota: ' + mapped.message);
       }
     });
   }

@@ -54,7 +54,8 @@ export class NotasListComponent implements OnInit, OnDestroy {
     private notaService: NotaService,
     private drawer: DrawerService,
     private dialog: MatDialog,
-    private snackbar: SnackbarService
+    private snackbar: SnackbarService,
+    private apiErrorMapper: ApiErrorMapper
   ) {}
 
   ngOnInit(): void {
@@ -77,7 +78,7 @@ export class NotasListComponent implements OnInit, OnDestroy {
     // Phase A/B: use backend service to fetch latest notes — no mock fallback
     this.notaService.listLatest().subscribe({
       next: (r) => { this.notas = r; this.aplicarFiltros(); },
-      error: (err) => { this.snackbar.error('Falha ao buscar notas: ' + (err?.message || 'erro desconhecido')); }
+      error: (err) => { const mapped = this.apiErrorMapper.map(err); this.snackbar.error('Falha ao buscar notas: ' + mapped.message); }
     });
   }
 
@@ -139,8 +140,8 @@ export class NotasListComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loading = false;
-        // Map known backend errors via ApiErrorMapper in the future; for now show backend message
-        this.snackbar.error('Erro ao imprimir nota: ' + (err?.error?.message || err?.message || 'erro desconhecido'));
+        const mapped = this.apiErrorMapper.map(err);
+        this.snackbar.error('Erro ao imprimir nota: ' + mapped.message);
       }
     });
   }
