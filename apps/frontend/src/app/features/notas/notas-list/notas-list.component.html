@@ -5,17 +5,9 @@
   </button>
 </app-page-header>
 
-<app-data-table
-  searchPlaceholder="Buscar por número..."
-  [searchWidth]="320"
-  [filterOptions]="filterOptions"
-  filterPlaceholder="Todos"
-  [totalItems]="notasFiltradas.length"
-  [pageSize]="10"
-  (searchChange)="onSearch($event)"
-  (filterChange)="onFilter($event)"
-  (pageChange)="onPageChange($event)"
->
+<app-data-table searchPlaceholder="Buscar por número..." [searchWidth]="320" [filterOptions]="filterOptions"
+  filterPlaceholder="Todos" [totalItems]="notasFiltradas.length" [pageSize]="10" (searchChange)="onSearch($event)"
+  (filterChange)="onFilter($event)" (pageChange)="onPageChange($event)">
   <table mat-table [dataSource]="paginaAtual">
     <ng-container matColumnDef="numero">
       <th mat-header-cell *matHeaderCellDef>Número</th>
@@ -55,10 +47,7 @@
     <ng-container matColumnDef="_imprimir">
       <th mat-header-cell *matHeaderCellDef>Imprimir</th>
       <td mat-cell *matCellDef="let n">
-        <div class="btn-icon"
-             (click)="imprimir(n)"
-             matTooltip="Imprimir"
-             [class.btn-disabled]="n.status !== 'ABERTA'">
+        <div class="btn-icon" (click)="imprimir(n)" matTooltip="Imprimir" [class.btn-disabled]="n.status !== 'ABERTA'">
           <mat-icon>print</mat-icon>
         </div>
       </td>
@@ -67,10 +56,8 @@
     <ng-container matColumnDef="_excluir">
       <th mat-header-cell *matHeaderCellDef>Excluir</th>
       <td mat-cell *matCellDef="let n">
-        <div class="btn-icon btn-delete"
-             (click)="excluir(n)"
-             matTooltip="Excluir"
-             [class.btn-disabled]="n.status !== 'ABERTA'">
+        <div class="btn-icon btn-delete" (click)="excluir(n)" matTooltip="Excluir"
+          [class.btn-disabled]="n.status !== 'ABERTA'">
           <mat-icon>delete</mat-icon>
         </div>
       </td>
