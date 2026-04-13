@@ -230,8 +230,16 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 			return fmt.Errorf("%w: codigo=%s saldo=%d solicitado=%d", ErrProductInsufficientStock, codigo, saldo, item.Quantidade)
 		}
 
-		if _, err := tx.ExecContext(ctx, "UPDATE produtos SET saldo = saldo - $1 WHERE codigo = $2", item.Quantidade, codigo); err != nil {
+		result, err := tx.ExecContext(ctx, "UPDATE produtos SET saldo = saldo - $1 WHERE codigo = $2 AND deleted_at IS NULL", item.Quantidade, codigo)
+		if err != nil {
 			return err
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if affected == 0 {
+			return fmt.Errorf("%w: codigo=%s", ErrProductNotFound, codigo)
 		}
 	}
 
