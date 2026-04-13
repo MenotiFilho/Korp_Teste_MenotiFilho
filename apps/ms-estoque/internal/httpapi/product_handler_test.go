@@ -45,6 +45,14 @@ func (s productCreatorStub) DeleteProduct(ctx context.Context, id int64) error {
 	return s.deleteFn(ctx, id)
 }
 
+// ListLowStock delegates to listFn when available (used by ListLowStockProducts handler tests)
+func (s productCreatorStub) ListLowStock(ctx context.Context, threshold, limit int) ([]domain.Product, error) {
+	if s.listFn == nil {
+		return []domain.Product{}, nil
+	}
+	return s.listFn(ctx)
+}
+
 func TestCreateProductHandler_WhenPayloadIsValid_ShouldReturn201WithProduct(t *testing.T) {
 	// Arrange
 	svc := productCreatorStub{createFn: func(_ context.Context, codigo, descricao string, saldo int) (domain.Product, error) {

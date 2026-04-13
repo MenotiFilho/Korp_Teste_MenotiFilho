@@ -11,6 +11,7 @@ func NewMux() *http.ServeMux {
 func RegisterProductRoutes(mux *http.ServeMux, handler *ProductHandler) {
 	mux.HandleFunc("POST /api/v1/produtos", handler.CreateProduct)
 	mux.HandleFunc("GET /api/v1/produtos", handler.ListProducts)
+	mux.HandleFunc("GET /api/v1/produtos/baixo-estoque", handler.ListLowStockProducts)
 	mux.HandleFunc("PUT /api/v1/produtos/{id}", handler.UpdateProduct)
 	mux.HandleFunc("DELETE /api/v1/produtos/{id}", handler.DeleteProduct)
 }

@@ -11,6 +11,7 @@ func NewMux() *http.ServeMux {
 func RegisterInvoiceRoutes(mux *http.ServeMux, handler *InvoiceHandler) {
 	mux.HandleFunc("POST /api/v1/notas", handler.CreateInvoice)
 	mux.HandleFunc("GET /api/v1/notas", handler.ListInvoices)
+	mux.HandleFunc("GET /api/v1/notas/ultimas", handler.ListLatestInvoices)
 	mux.HandleFunc("PUT /api/v1/notas/{id}", handler.UpdateInvoice)
 	mux.HandleFunc("DELETE /api/v1/notas/{id}", handler.DeleteInvoice)
 }

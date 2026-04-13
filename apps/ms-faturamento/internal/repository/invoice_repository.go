@@ -125,6 +125,63 @@ ORDER BY id ASC
 	return invoices, nil
 }
 
+// ListLatestInvoices returns the most recent invoices ordered by numero desc
+func (r *InvoiceRepository) ListLatestInvoices(ctx context.Context, limit int) ([]domain.Invoice, error) {
+	const query = `
+SELECT id, numero, status, created_at, updated_at
+FROM notas
+WHERE deleted_at IS NULL
+ORDER BY numero DESC
+LIMIT $1
+`
+
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	type invoiceRow struct {
+		ID     int64
+		Numero int
+		Status string
+	}
+
+	ids := make([]invoiceRow, 0)
+	for rows.Next() {
+		var ir invoiceRow
+		var createdAt, updatedAt sql.NullTime
+		if err := rows.Scan(&ir.ID, &ir.Numero, &ir.Status, &createdAt, &updatedAt); err != nil {
+			return nil, err
+		}
+		ids = append(ids, ir)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(ids) == 0 {
+		return []domain.Invoice{}, nil
+	}
+
+	invoices := make([]domain.Invoice, 0, len(ids))
+	for _, ir := range ids {
+		items, err := r.listItemsByInvoice(ctx, ir.ID)
+		if err != nil {
+			return nil, err
+		}
+		invoices = append(invoices, domain.Invoice{
+			ID:     ir.ID,
+			Numero: ir.Numero,
+			Status: ir.Status,
+			Itens:  items,
+		})
+	}
+
+	return invoices, nil
+}
+
 func (r *InvoiceRepository) listItemsByInvoice(ctx context.Context, invoiceID int64) ([]domain.InvoiceItem, error) {
 	const query = `
 SELECT id, nota_id, produto_codigo, quantidade

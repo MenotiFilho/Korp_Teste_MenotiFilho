@@ -9,6 +9,7 @@ import (
 type InvoiceRepository interface {
 	CreateInvoice(ctx context.Context, invoice domain.Invoice) (domain.Invoice, error)
 	ListInvoices(ctx context.Context) ([]domain.Invoice, error)
+	ListLatestInvoices(ctx context.Context, limit int) ([]domain.Invoice, error)
 	GetInvoiceByID(ctx context.Context, id int64) (domain.Invoice, error)
 	UpdateStatus(ctx context.Context, id int64, status string) error
 	UpdateInvoiceItems(ctx context.Context, id int64, items []domain.InvoiceItem) (domain.Invoice, error)
@@ -34,6 +35,14 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, items []domain.Invoi
 
 func (s *InvoiceService) ListInvoices(ctx context.Context) ([]domain.Invoice, error) {
 	return s.repo.ListInvoices(ctx)
+}
+
+// ListLatest returns the most recent invoices up to limit
+func (s *InvoiceService) ListLatest(ctx context.Context, limit int) ([]domain.Invoice, error) {
+	if limit <= 0 {
+		limit = 6
+	}
+	return s.repo.ListLatestInvoices(ctx, limit)
 }
 
 func (s *InvoiceService) UpdateInvoice(ctx context.Context, id int64, items []domain.InvoiceItem) (domain.Invoice, error) {

@@ -84,6 +84,40 @@ ORDER BY id ASC
 	return products, nil
 }
 
+// ListLowStockProducts returns products with saldo > 0 and saldo < threshold ordered by saldo asc
+func (r *ProductRepository) ListLowStockProducts(ctx context.Context, threshold int, limit int) ([]domain.Product, error) {
+	const query = `
+SELECT id, codigo, descricao, saldo
+FROM produtos
+WHERE deleted_at IS NULL
+  AND saldo > 0
+  AND saldo < $1
+ORDER BY saldo ASC, id ASC
+LIMIT $2
+`
+
+	rows, err := r.db.QueryContext(ctx, query, threshold, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	products := make([]domain.Product, 0)
+	for rows.Next() {
+		var p domain.Product
+		if err := rows.Scan(&p.ID, &p.Codigo, &p.Descricao, &p.Saldo); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return products, nil
+}
+
 func (r *ProductRepository) UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
 	const query = `
 UPDATE produtos

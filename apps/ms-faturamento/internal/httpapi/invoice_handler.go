@@ -96,6 +96,44 @@ func (h *InvoiceHandler) ListInvoices(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(out)
 }
 
+// ListLatestInvoices handles GET /api/v1/notas/ultimas?limit=N
+func (h *InvoiceHandler) ListLatestInvoices(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query().Get("limit")
+	limit := 6
+	if q != "" {
+		var l int
+		if _, err := fmt.Sscanf(q, "%d", &l); err != nil || l <= 0 {
+			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "limit invalido", nil)
+			return
+		}
+		if l > 100 {
+			l = 100
+		}
+		limit = l
+	}
+
+	invoices, err := h.service.(interface {
+		ListLatest(context.Context, int) ([]domain.Invoice, error)
+	}).ListLatest(r.Context(), limit)
+	if err != nil {
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	out := make([]invoiceResponse, 0, len(invoices))
+	for _, inv := range invoices {
+		items := make([]invoiceItemResponse, 0, len(inv.Itens))
+		for _, it := range inv.Itens {
+			items = append(items, invoiceItemResponse{ID: it.ID, ProdutoCodigo: it.ProdutoCodigo, Quantidade: it.Quantidade})
+		}
+		out = append(out, invoiceResponse{ID: inv.ID, Numero: inv.Numero, Status: inv.Status, Itens: items})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(out)
+}
+
 func toInvoiceResponse(invoice domain.Invoice) invoiceResponse {
 	items := make([]invoiceItemResponse, 0, len(invoice.Itens))
 	for _, item := range invoice.Itens {

@@ -38,6 +38,14 @@ func (s invoiceServiceStub) DeleteInvoice(ctx context.Context, id int64) error {
 	return s.deleteFn(ctx, id)
 }
 
+// ListLatest delegates to listFn when available (used by ListLatestInvoices handler tests)
+func (s invoiceServiceStub) ListLatest(ctx context.Context, limit int) ([]domain.Invoice, error) {
+	if s.listFn == nil {
+		return []domain.Invoice{}, nil
+	}
+	return s.listFn(ctx)
+}
+
 func TestCreateInvoiceHandler_WhenPayloadIsValid_ShouldReturn201WithInvoice(t *testing.T) {
 	// Arrange
 	svc := invoiceServiceStub{createFn: func(_ context.Context, items []domain.InvoiceItem) (domain.Invoice, error) {

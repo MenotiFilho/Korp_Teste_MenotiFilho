@@ -91,6 +91,51 @@ func (h *ProductHandler) ListProducts(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(out)
 }
 
+// ListLowStockProducts handles GET /api/v1/produtos/baixo-estoque?threshold=N&limit=M
+func (h *ProductHandler) ListLowStockProducts(w http.ResponseWriter, r *http.Request) {
+	qThreshold := r.URL.Query().Get("threshold")
+	qLimit := r.URL.Query().Get("limit")
+
+	threshold := 6
+	limit := 6
+	if qThreshold != "" {
+		var t int
+		if _, err := fmt.Sscanf(qThreshold, "%d", &t); err != nil || t <= 0 {
+			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "threshold invalido", nil)
+			return
+		}
+		threshold = t
+	}
+	if qLimit != "" {
+		var l int
+		if _, err := fmt.Sscanf(qLimit, "%d", &l); err != nil || l <= 0 {
+			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "limit invalido", nil)
+			return
+		}
+		if l > 100 {
+			l = 100
+		}
+		limit = l
+	}
+
+	products, err := h.service.(interface {
+		ListLowStock(context.Context, int, int) ([]domain.Product, error)
+	}).ListLowStock(r.Context(), threshold, limit)
+	if err != nil {
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	out := make([]productResponse, 0, len(products))
+	for _, p := range products {
+		out = append(out, productResponse{ID: p.ID, Codigo: p.Codigo, Descricao: p.Descricao, Saldo: p.Saldo})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(out)
+}
+
 func (h *ProductHandler) handleCreateError(w http.ResponseWriter, r *http.Request, err error) {
 	if errors.Is(err, domain.ErrCodigoRequired) || errors.Is(err, domain.ErrDescricaoRequired) || errors.Is(err, domain.ErrSaldoNegative) {
 		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "dados do produto invalidos", map[string]string{"error": err.Error()})

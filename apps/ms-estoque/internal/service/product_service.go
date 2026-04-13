@@ -9,6 +9,7 @@ import (
 type ProductRepository interface {
 	CreateProduct(ctx context.Context, p domain.Product) (domain.Product, error)
 	ListProducts(ctx context.Context) ([]domain.Product, error)
+	ListLowStockProducts(ctx context.Context, threshold int, limit int) ([]domain.Product, error)
 	UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error)
 	SoftDeleteProduct(ctx context.Context, id int64) error
 }
@@ -32,6 +33,20 @@ func (s *ProductService) CreateProduct(ctx context.Context, codigo, descricao st
 
 func (s *ProductService) ListProducts(ctx context.Context) ([]domain.Product, error) {
 	return s.repo.ListProducts(ctx)
+}
+
+// ListLowStock returns products with low stock using defaults if needed
+func (s *ProductService) ListLowStock(ctx context.Context, threshold, limit int) ([]domain.Product, error) {
+	if threshold <= 0 {
+		threshold = 6
+	}
+	if limit <= 0 {
+		limit = 6
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	return s.repo.ListLowStockProducts(ctx, threshold, limit)
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, id int64, descricao string, saldo int) (domain.Product, error) {
