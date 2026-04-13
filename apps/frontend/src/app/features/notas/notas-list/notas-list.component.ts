@@ -6,6 +6,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
 import { MockDataService } from '../../../core/services/mock-data.service';
+import { NotaService } from '../../../core/services/nota.service';
 import { Nota } from '../../../core/models/nota.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -50,6 +51,7 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
   constructor(
     private mockData: MockDataService,
+    private notaService: NotaService,
     private drawer: DrawerService,
     private dialog: MatDialog,
     private snackbar: SnackbarService
@@ -72,8 +74,11 @@ export class NotasListComponent implements OnInit, OnDestroy {
   }
 
   carregarNotas(): void {
-    this.notas = this.mockData.getNotas();
-    this.aplicarFiltros();
+    // Phase A: use backend service to fetch latest notes, fallback to mock on error
+    this.notaService.listLatest().subscribe({
+      next: (r) => { this.notas = r; this.aplicarFiltros(); },
+      error: () => { this.notas = this.mockData.getNotas(); this.aplicarFiltros(); }
+    });
   }
 
   aplicarFiltros(): void {

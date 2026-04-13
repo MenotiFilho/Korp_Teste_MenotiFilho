@@ -6,6 +6,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
 import { MockDataService } from '../../../core/services/mock-data.service';
+import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto } from '../../../core/models/produto.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
@@ -38,6 +39,7 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
 
   constructor(
     private mockData: MockDataService,
+    private produtoService: ProdutoService,
     private dialog: MatDialog,
     private snackbar: SnackbarService,
     private drawer: DrawerService
@@ -60,8 +62,11 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   }
 
   carregarProdutos(): void {
-    this.produtos = this.mockData.getProdutos();
-    this.produtosFiltrados = [...this.produtos];
+    // Phase A: read-only list from backend; fallback to mock on error
+    this.produtoService.listAll().subscribe({
+      next: (r) => { this.produtos = r; this.produtosFiltrados = [...r]; },
+      error: () => { this.produtos = this.mockData.getProdutos(); this.produtosFiltrados = [...this.produtos]; }
+    });
   }
 
   onSearch(term: string): void {
