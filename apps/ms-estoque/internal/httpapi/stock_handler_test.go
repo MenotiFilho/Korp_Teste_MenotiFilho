@@ -65,6 +65,31 @@ func TestDecreaseStockHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testin
 	assertErrorCode(t, rec.Body.Bytes(), "INVALID_JSON")
 }
 
+func TestDecreaseStockHandler_WhenItemsEmpty_ShouldReturn400(t *testing.T) {
+	// Arrange
+	called := false
+	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
+		called = true
+		return nil
+	}}
+	h := NewStockHandler(svc)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[]}`)))
+	req.Header.Set("Idempotency-Key", "idem-empty")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.DecreaseStock(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	if called {
+		t.Fatal("expected service to NOT be called when items is empty")
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "VALIDATION_ERROR")
+}
+
 func TestDecreaseStockHandler_WhenIdempotencyKeyMissing_ShouldReturn400(t *testing.T) {
 	// Arrange
 	called := false

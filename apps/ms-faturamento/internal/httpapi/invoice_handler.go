@@ -3,8 +3,8 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
@@ -101,8 +101,8 @@ func (h *InvoiceHandler) ListLatestInvoices(w http.ResponseWriter, r *http.Reque
 	q := r.URL.Query().Get("limit")
 	limit := 6
 	if q != "" {
-		var l int
-		if _, err := fmt.Sscanf(q, "%d", &l); err != nil || l <= 0 {
+		l, err := strconv.Atoi(q)
+		if err != nil || l <= 0 {
 			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "limit invalido", nil)
 			return
 		}
@@ -238,9 +238,7 @@ func (h *InvoiceHandler) DeleteInvoice(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseInt64(s string) (int64, error) {
-	var id int64
-	_, err := fmt.Sscanf(s, "%d", &id)
-	return id, err
+	return strconv.ParseInt(s, 10, 64)
 }
 
 func isInvoiceNotFoundError(err error) bool {

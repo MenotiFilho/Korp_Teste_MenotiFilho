@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-estoque/internal/domain"
@@ -99,16 +99,16 @@ func (h *ProductHandler) ListLowStockProducts(w http.ResponseWriter, r *http.Req
 	threshold := 6
 	limit := 6
 	if qThreshold != "" {
-		var t int
-		if _, err := fmt.Sscanf(qThreshold, "%d", &t); err != nil || t <= 0 {
+		t, err := strconv.Atoi(qThreshold)
+		if err != nil || t <= 0 {
 			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "threshold invalido", nil)
 			return
 		}
 		threshold = t
 	}
 	if qLimit != "" {
-		var l int
-		if _, err := fmt.Sscanf(qLimit, "%d", &l); err != nil || l <= 0 {
+		l, err := strconv.Atoi(qLimit)
+		if err != nil || l <= 0 {
 			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "limit invalido", nil)
 			return
 		}
@@ -221,7 +221,5 @@ func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func parseInt64(s string) (int64, error) {
-	var id int64
-	_, err := fmt.Sscanf(s, "%d", &id)
-	return id, err
+	return strconv.ParseInt(s, 10, 64)
 }

@@ -45,6 +45,11 @@ func (h *StockHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Itens) == 0 {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "itens e obrigatorio e nao pode ser vazio", nil)
+		return
+	}
+
 	inputs := make([]service.StockDecreaseInput, 0, len(req.Itens))
 	for _, item := range req.Itens {
 		inputs = append(inputs, service.StockDecreaseInput{
