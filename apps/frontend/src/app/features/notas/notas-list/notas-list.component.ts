@@ -121,7 +121,7 @@ export class NotasListComponent implements OnInit, OnDestroy {
   }
 
   formatarNumero(num: number): string {
-    return String(num).padStart(5, '0');
+    return num.toString();
   }
 
   totalItens(nota: Nota): number {

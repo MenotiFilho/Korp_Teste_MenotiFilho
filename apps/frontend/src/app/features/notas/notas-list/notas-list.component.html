@@ -13,7 +13,7 @@
     <ng-container matColumnDef="numero">
       <th mat-header-cell *matHeaderCellDef>Número</th>
       <td mat-cell *matCellDef="let n">
-        <span class="cell-mono">#{{ formatarNumero(n.numero) }}</span>
+        <span class="cell-mono">{{ formatarNumero(n.numero) }}</span>
       </td>
     </ng-container>
 
