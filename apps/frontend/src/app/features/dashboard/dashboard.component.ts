@@ -6,7 +6,6 @@ import { MatTableModule } from '@angular/material/table';
 import { ProdutoService } from '../../core/services/produto.service';
 import { NotaService } from '../../core/services/nota.service';
 import { Nota } from '../../core/models/nota.model';
-import { Nota } from '../../core/models/nota.model';
 import { Produto } from '../../core/models/produto.model';
 import { StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { PageHeaderComponent } from '../../shared/components/page-header/page-header.component';
