@@ -10,5 +10,20 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 })
 export class LoadingOverlayComponent {
   @Input() message = 'Processando...';
-  @Input() visible = false;
+  private _visible = false;
+
+  @Input()
+  set visible(value: boolean) {
+    if (!value && this._visible) {
+      setTimeout(() => {
+        this._visible = false;
+      }, 1000);
+    } else {
+      this._visible = value;
+    }
+  }
+
+  get visible(): boolean {
+    return this._visible;
+  }
 }
