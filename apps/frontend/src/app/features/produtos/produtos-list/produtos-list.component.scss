@@ -1,0 +1,186 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  height: 100%;
+}
+
+// Button/New (.pen: height 40, fill primary, radius 8, gap 8, padding [0,20])
+.btn-new {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  border: none;
+  border-radius: 8px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Search (.pen: width 360, height 44, radius 8, fill surface, stroke 1px outline, padding [0,16], gap 8)
+.search-row {
+  display: flex;
+  align-items: center;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 360px;
+  height: 44px;
+  padding: 0 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline);
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--color-on-surface-variant);
+  }
+
+  input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--color-on-surface);
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    outline: none;
+
+    &::placeholder {
+      color: var(--color-on-surface-variant);
+    }
+  }
+}
+
+// Table container (.pen: radius 12, fill surface, stroke 1px outline-variant)
+.table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+// Table
+.produtos-table {
+  width: 100%;
+  background: transparent;
+
+  // Header (.pen: height 48, fill surface-bright, padding [0,24])
+  th.mat-mdc-header-cell {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+    height: 48px;
+    padding: 0 24px;
+    vertical-align: middle;
+  }
+
+  tr.mat-mdc-header-row {
+    background: var(--color-surface-bright);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  // Data rows (.pen: height 48, padding [0,24], border bottom)
+  td.mat-mdc-cell {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    color: var(--color-on-surface);
+    height: 48px;
+    padding: 0 24px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .cell-mono {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+  }
+
+  .saldo-warning {
+    color: var(--color-warning);
+  }
+
+  .saldo-error {
+    color: var(--color-error);
+  }
+}
+
+// Action buttons (.pen: 36x36, fill surface, radius 8)
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  cursor: pointer;
+  margin: 0 auto;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--color-on-surface-variant);
+  }
+
+  &.btn-delete mat-icon {
+    color: var(--color-error);
+  }
+}
+
+// Paginator (.pen: height 48, fill surface-bright, padding [0,24])
+mat-paginator {
+  background: var(--color-surface-bright);
+  border-top: 1px solid var(--color-outline-variant);
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+// Hide page size selector
+::ng-deep .mat-mdc-paginator-page-size {
+  display: none !important;
+}
+
+::ng-deep .mat-mdc-paginator-container {
+  justify-content: flex-end;
+}
+
+// Editar/Excluir columns centered
+::ng-deep .mat-column-editar,
+::ng-deep .mat-column-excluir {
+  text-align: center !important;
+  width: 80px;
+}

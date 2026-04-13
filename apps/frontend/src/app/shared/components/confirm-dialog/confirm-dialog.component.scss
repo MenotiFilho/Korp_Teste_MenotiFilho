@@ -1,0 +1,31 @@
+h2 {
+  font-family: Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-on-surface);
+  margin: 0;
+}
+
+mat-dialog-content {
+  p {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    color: var(--color-on-surface-variant);
+    margin: 0;
+  }
+}
+
+mat-dialog-actions {
+  padding: var(--spacing-md) 0 0 0;
+  gap: var(--spacing-sm);
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+  }
+
+  .btn-danger {
+    background: var(--color-error);
+    color: var(--color-on-error);
+  }
+}

@@ -1,0 +1,139 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.kpi-row {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.kpi-card {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+
+  .kpi-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--color-on-surface-variant);
+    }
+
+    .kpi-label {
+      font-family: Inter, sans-serif;
+      font-size: 14px;
+      color: var(--color-on-surface-variant);
+    }
+  }
+
+  .kpi-value {
+    font-family: Inter, sans-serif;
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--color-on-surface);
+
+    &.warning {
+      color: var(--color-warning);
+    }
+
+    &.success {
+      color: var(--color-success);
+    }
+  }
+}
+
+.sections-row {
+  display: flex;
+  gap: var(--spacing-lg);
+}
+
+.section-card {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-outline-variant);
+
+    .section-title {
+      font-family: Inter, sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--color-on-surface);
+    }
+
+    .section-link {
+      font-family: Inter, sans-serif;
+      font-size: 13px;
+      color: var(--color-primary);
+      text-decoration: none;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.section-table {
+  width: 100%;
+  background: transparent;
+
+  th.mat-mdc-header-cell {
+    font-family: Inter, sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--color-on-surface-variant);
+    height: 48px;
+    padding: 0 16px;
+    vertical-align: middle;
+  }
+
+  td.mat-mdc-cell {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    color: var(--color-on-surface);
+    height: 48px;
+    padding: 0 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+
+  tr.mat-mdc-header-row {
+    background: var(--color-surface-bright);
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--color-surface-hover);
+  }
+
+  .cell-mono {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 13px;
+  }
+
+  .saldo-baixo {
+    color: var(--color-warning);
+    font-weight: 500;
+  }
+}

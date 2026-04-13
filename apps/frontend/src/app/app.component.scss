@@ -1,0 +1,36 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+mat-sidenav-container {
+  height: 100%;
+}
+
+// Left sidebar (260px)
+mat-sidenav:first-of-type {
+  width: var(--sidebar-width);
+  border-radius: 0;
+  border: none;
+}
+
+// Right drawer (424px)
+mat-sidenav:last-of-type {
+  width: 424px;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--color-outline-variant);
+}
+
+.main-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--content-padding);
+  background: var(--color-background);
+}

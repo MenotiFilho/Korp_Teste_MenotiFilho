@@ -1,0 +1,6 @@
+<span class="badge" [class]="status.toLowerCase()">
+  <mat-icon class="badge-icon">
+    {{ status === 'ABERTA' ? 'radio_button_checked' : 'check_circle' }}
+  </mat-icon>
+  <span class="badge-label">{{ status }}</span>
+</span>

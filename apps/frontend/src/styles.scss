@@ -1,0 +1,28 @@
+@use 'styles/theme';
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Inter, "Helvetica Neue", sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-surface);
+}
+
+// Snackbar styles
+.snackbar-success {
+  --mdc-snackbar-container-color: var(--color-success-container);
+  --mdc-snackbar-supporting-text-color: var(--color-success);
+  --mat-snack-bar-button-color: var(--color-success);
+}
+
+.snackbar-error {
+  --mdc-snackbar-container-color: var(--color-error-container);
+  --mdc-snackbar-supporting-text-color: var(--color-on-error-container);
+  --mat-snack-bar-button-color: var(--color-on-error-container);
+}
+
+.snackbar-info {
+  --mdc-snackbar-container-color: var(--color-surface-container-high);
+  --mdc-snackbar-supporting-text-color: var(--color-on-surface);
+  --mat-snack-bar-button-color: var(--color-primary);
+}

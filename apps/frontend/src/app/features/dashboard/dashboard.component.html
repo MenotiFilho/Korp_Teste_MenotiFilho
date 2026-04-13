@@ -1,0 +1,102 @@
+<app-page-header title="Início" subtitle="Visão geral do sistema" />
+
+<!-- KPI Row -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <mat-icon>inventory_2</mat-icon>
+      <span class="kpi-label">Total Produtos</span>
+    </div>
+    <span class="kpi-value">{{ totalProdutos }}</span>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <mat-icon>description</mat-icon>
+      <span class="kpi-label">Notas Abertas</span>
+    </div>
+    <span class="kpi-value warning">{{ notasAbertas }}</span>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-header">
+      <mat-icon>check</mat-icon>
+      <span class="kpi-label">Notas Fechadas</span>
+    </div>
+    <span class="kpi-value success">{{ notasFechadas }}</span>
+  </div>
+</div>
+
+<!-- Sections Row -->
+<div class="sections-row">
+  <!-- Últimas Notas -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Últimas Notas</span>
+      <a routerLink="/notas" class="section-link">Ver todas →</a>
+    </div>
+    <table mat-table [dataSource]="ultimasNotas" class="section-table">
+      <ng-container matColumnDef="numero">
+        <th mat-header-cell *matHeaderCellDef>Número</th>
+        <td mat-cell *matCellDef="let nota">
+          <span class="cell-mono">{{ nota.numero | number: '5.0-0' }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="itens">
+        <th mat-header-cell *matHeaderCellDef>Itens</th>
+        <td mat-cell *matCellDef="let nota">
+          {{ nota.itens.length }} {{ nota.itens.length === 1 ? 'item' : 'itens' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="criado_em">
+        <th mat-header-cell *matHeaderCellDef>Criado em</th>
+        <td mat-cell *matCellDef="let nota">
+          {{ formatarData(nota.criado_em) }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let nota">
+          <app-status-badge [status]="nota.status" />
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <!-- Estoque Baixo -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Produtos c/ Baixo Estoque</span>
+      <a routerLink="/produtos" class="section-link">Ver todos →</a>
+    </div>
+    <table mat-table [dataSource]="produtosBaixoEstoque" class="section-table">
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef>Código</th>
+        <td mat-cell *matCellDef="let p">
+          <span class="cell-mono">{{ p.codigo }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="descricao">
+        <th mat-header-cell *matHeaderCellDef>Descrição</th>
+        <td mat-cell *matCellDef="let p">{{ p.descricao }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="saldo">
+        <th mat-header-cell *matHeaderCellDef>Saldo</th>
+        <td mat-cell *matCellDef="let p">
+          <span class="saldo-baixo">{{ p.saldo }}</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="estoqueColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: estoqueColumns"></tr>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+:host {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+
+  .title {
+    font-family: Inter, sans-serif;
+    font-size: 28px;
+    font-weight: 500;
+    color: var(--color-on-surface);
+    margin: 0;
+  }
+
+  .subtitle {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    color: var(--color-on-surface-variant);
+    margin: 0;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: center;
+}

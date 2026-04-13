@@ -1,0 +1,81 @@
+<app-page-header title="Produtos" subtitle="Gerencie o cadastro de produtos do estoque">
+  <button class="btn-new" (click)="abrirNovo()">
+    <mat-icon>add</mat-icon>
+    <span>Novo Produto</span>
+  </button>
+</app-page-header>
+
+<!-- Search -->
+<div class="search-row">
+  <div class="search-field">
+    <mat-icon>search</mat-icon>
+    <input
+      type="text"
+      placeholder="Buscar por código ou descrição..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="filtrar()"
+    />
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-container">
+  <div class="table-scroll">
+    <table mat-table [dataSource]="paginaAtual" class="produtos-table">
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef>ID</th>
+        <td mat-cell *matCellDef="let p">{{ p.id }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="codigo">
+        <th mat-header-cell *matHeaderCellDef>Código</th>
+        <td mat-cell *matCellDef="let p">
+          <span class="cell-mono">{{ p.codigo }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="descricao">
+        <th mat-header-cell *matHeaderCellDef>Descrição</th>
+        <td mat-cell *matCellDef="let p">{{ p.descricao }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="saldo">
+        <th mat-header-cell *matHeaderCellDef>Saldo</th>
+        <td mat-cell *matCellDef="let p">
+          <span [class.saldo-warning]="p.saldo < 5 && p.saldo > 0"
+                [class.saldo-error]="p.saldo === 0">
+            {{ p.saldo }}
+          </span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="editar">
+        <th mat-header-cell *matHeaderCellDef>Editar</th>
+        <td mat-cell *matCellDef="let p">
+          <div class="btn-icon" (click)="editar(p)" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </div>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="excluir">
+        <th mat-header-cell *matHeaderCellDef>Excluir</th>
+        <td mat-cell *matCellDef="let p">
+          <div class="btn-icon btn-delete" (click)="excluir(p)" matTooltip="Excluir">
+            <mat-icon>delete</mat-icon>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    [length]="totalRegistros"
+    [pageSize]="10"
+    showFirstLastButtons
+    (page)="onPageChange($event)"
+  />
+</div>
