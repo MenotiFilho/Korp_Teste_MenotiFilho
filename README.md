@@ -14,7 +14,7 @@ desenvolvido com Angular 19, Go 1.23 e PostgreSQL 16.
 
 ## Arquitetura
 
-```
+
 graph TD
     subgraph Frontend
         A[Angular 19<br/>Porta: 4200]
@@ -35,7 +35,7 @@ graph TD
     C --> B
     B --> D
     C --> E
-```
+
 
 O frontend se comunica diretamente com ambos os microsservicos. O
 ms-faturamento chama o ms-estoque via HTTP para realizar a baixa de
