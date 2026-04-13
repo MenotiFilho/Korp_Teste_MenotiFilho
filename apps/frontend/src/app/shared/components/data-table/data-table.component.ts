@@ -11,9 +11,10 @@ export interface FilterOption {
 
 @Component({
   selector: 'app-data-table',
+  standalone: true,
   imports: [FormsModule, MatIconModule, MatPaginatorModule, MatSelectModule],
   templateUrl: './data-table.component.html',
-  styleUrl: './data-table.component.scss',
+  styleUrls: ['./data-table.component.scss'],
 })
 export class DataTableComponent {
   @Input() searchPlaceholder = '';

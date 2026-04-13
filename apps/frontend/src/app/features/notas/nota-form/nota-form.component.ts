@@ -16,6 +16,7 @@ import { MockDataService } from '../../../core/services/mock-data.service';
 import { NotaService } from '../../../core/services/nota.service';
 import { Produto } from '../../../core/models/produto.model';
 import { NotaItemsTableComponent, NotaItem } from '../../../shared/components/nota-items-table/nota-items-table.component';
+import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 
 interface ItemNota {
   id?: number;
@@ -26,6 +27,7 @@ interface ItemNota {
 
 @Component({
   selector: 'app-nota-form',
+  standalone: true,
   imports: [
     ReactiveFormsModule,
     MatIconModule,
@@ -36,7 +38,7 @@ interface ItemNota {
     NotaItemsTableComponent,
   ],
   templateUrl: './nota-form.component.html',
-  styleUrl: './nota-form.component.scss',
+  styleUrls: ['./nota-form.component.scss'],
 })
 export class NotaFormComponent implements OnInit {
   form: FormGroup;
@@ -50,7 +52,8 @@ export class NotaFormComponent implements OnInit {
     private drawer: DrawerService,
     private snackbar: SnackbarService,
     private mockData: MockDataService,
-    private notaService: NotaService
+    private notaService: NotaService,
+    private apiErrorMapper: ApiErrorMapper
   ) {
     this.form = this.fb.group({
       produto: [null, Validators.required],

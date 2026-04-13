@@ -4,9 +4,10 @@ import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-top-bar',
+  standalone: true,
   imports: [MatIconModule, RouterLink],
   templateUrl: './top-bar.component.html',
-  styleUrl: './top-bar.component.scss',
+  styleUrls: ['./top-bar.component.scss'],
 })
 export class TopBarComponent {
   @Input() title = '';

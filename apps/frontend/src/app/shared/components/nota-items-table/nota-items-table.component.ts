@@ -13,7 +13,7 @@ export interface NotaItem {
   standalone: true,
   imports: [CommonModule, MatTableModule],
   templateUrl: './nota-items-table.component.html',
-  styleUrl: './nota-items-table.component.scss',
+  styleUrls: ['./nota-items-table.component.scss'],
 })
 export class NotaItemsTableComponent {
   @Input() itens: NotaItem[] = [];

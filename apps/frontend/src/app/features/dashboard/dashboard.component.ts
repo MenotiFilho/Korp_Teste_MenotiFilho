@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MockDataService } from '../../core/services/mock-data.service';
@@ -11,16 +10,16 @@ import { PageHeaderComponent } from '../../shared/components/page-header/page-he
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
   imports: [
     RouterLink,
-    DecimalPipe,
     MatIconModule,
     MatTableModule,
     StatusBadgeComponent,
     PageHeaderComponent,
   ],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.scss',
+  styleUrls: ['./dashboard.component.scss'],
 })
 export class DashboardComponent implements OnInit {
   totalProdutos = 0;

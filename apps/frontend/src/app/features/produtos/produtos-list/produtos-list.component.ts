@@ -7,6 +7,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { ProdutoService } from '../../../core/services/produto.service';
+import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Produto } from '../../../core/models/produto.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { DataTableComponent } from '../../../shared/components/data-table/data-table.component';
@@ -16,6 +17,7 @@ import { DrawerService } from '../../../shared/services/drawer.service';
 
 @Component({
   selector: 'app-produtos-list',
+  standalone: true,
   imports: [
     MatIconModule,
     MatTableModule,
@@ -25,7 +27,7 @@ import { DrawerService } from '../../../shared/services/drawer.service';
     DataTableComponent,
   ],
   templateUrl: './produtos-list.component.html',
-  styleUrl: './produtos-list.component.scss',
+  styleUrls: ['./produtos-list.component.scss'],
 })
 export class ProdutosListComponent implements OnInit, OnDestroy {
   displayedColumns = ['codigo', 'descricao', 'saldo', '_editar', '_excluir'];
@@ -65,7 +67,7 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   carregarProdutos(): void {
     // Phase A/B: read-only list from backend — no mock fallback
     this.produtoService.listAll().subscribe({
-      next: (r) => { this.produtos = r; this.produtosFiltradas = [...r]; },
+      next: (r) => { this.produtos = r; this.produtosFiltrados = [...r]; },
       error: (err) => { const mapped = this.apiErrorMapper.map(err); this.snackbar.error('Falha ao buscar produtos: ' + mapped.message); }
     });
   }

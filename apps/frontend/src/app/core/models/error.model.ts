@@ -2,5 +2,5 @@ export interface ApiError {
   code: string;
   message: string;
   details: string | null;
-  request_id: string;
+  request_id: string | null;
 }

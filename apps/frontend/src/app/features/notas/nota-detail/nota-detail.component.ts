@@ -12,9 +12,10 @@ import { NotaItemsTableComponent } from '../../../shared/components/nota-items-t
 
 @Component({
   selector: 'app-nota-detail',
+  standalone: true,
   imports: [MatIconModule, MatButtonModule, StatusBadgeComponent, LoadingOverlayComponent, NotaItemsTableComponent],
   templateUrl: './nota-detail.component.html',
-  styleUrl: './nota-detail.component.scss',
+  styleUrls: ['./nota-detail.component.scss'],
 })
 export class NotaDetailComponent implements OnInit, OnDestroy {
   nota: Nota | null = null;

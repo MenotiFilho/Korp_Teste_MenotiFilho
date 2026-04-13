@@ -7,6 +7,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { Subscription } from 'rxjs';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { NotaService } from '../../../core/services/nota.service';
+import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Nota } from '../../../core/models/nota.model';
 import { PageHeaderComponent } from '../../../shared/components/page-header/page-header.component';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -18,6 +19,7 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
 
 @Component({
   selector: 'app-notas-list',
+  standalone: true,
   imports: [
     MatIconModule,
     MatTableModule,
@@ -29,7 +31,7 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
     LoadingOverlayComponent,
   ],
   templateUrl: './notas-list.component.html',
-  styleUrl: './notas-list.component.scss',
+  styleUrls: ['./notas-list.component.scss'],
 })
 export class NotasListComponent implements OnInit, OnDestroy {
   displayedColumns = ['numero', 'itens', 'criado_em', 'status', '_visualizar', '_imprimir', '_excluir'];

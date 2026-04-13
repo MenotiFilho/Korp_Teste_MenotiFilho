@@ -15,9 +15,11 @@ import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { MockDataService } from '../../../core/services/mock-data.service';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { Produto } from '../../../core/models/produto.model';
+import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 
 @Component({
   selector: 'app-produto-form',
+  standalone: true,
   imports: [
     ReactiveFormsModule,
     MatIconModule,
@@ -26,7 +28,7 @@ import { Produto } from '../../../core/models/produto.model';
     MatFormFieldModule,
   ],
   templateUrl: './produto-form.component.html',
-  styleUrl: './produto-form.component.scss',
+  styleUrls: ['./produto-form.component.scss'],
 })
 export class ProdutoFormComponent implements OnInit, OnDestroy {
   form: FormGroup;
