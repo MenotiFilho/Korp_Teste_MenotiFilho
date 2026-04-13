@@ -57,7 +57,7 @@ func (h *PrintInvoiceHandler) PrintInvoice(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *PrintInvoiceHandler) handlePrintError(w http.ResponseWriter, r *http.Request, err error) {
-	if errors.Is(err, service.ErrInvoiceNotAberta) {
+	if errors.Is(err, domain.ErrInvoiceNotAberta) {
 		WriteError(w, r, http.StatusConflict, "INVOICE_NOT_ABERTA", "nota fiscal nao esta em status ABERTA", nil)
 		return
 	}

@@ -90,7 +90,7 @@ func TestPrintInvoiceService_WhenInvoiceIsFechada_ShouldReturnErrorWithoutCallin
 	if err == nil {
 		t.Fatal("expected error for non-ABERTA invoice")
 	}
-	if err != ErrInvoiceNotAberta {
+	if err != domain.ErrInvoiceNotAberta {
 		t.Fatalf("expected ErrInvoiceNotAberta, got %v", err)
 	}
 	if stockCalled {

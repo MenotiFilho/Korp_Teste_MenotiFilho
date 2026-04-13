@@ -2,13 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
 )
-
-var ErrInvoiceNotAberta = errors.New("invoice is not in ABERTA status")
 
 type InvoiceUpdater interface {
 	UpdateStatus(ctx context.Context, id int64, status string) error
@@ -32,7 +29,7 @@ func NewPrintInvoiceService(invoiceRepo InvoiceUpdater, stockClient StockClientI
 
 func (s *PrintInvoiceService) Print(ctx context.Context, invoice domain.Invoice) error {
 	if invoice.Status != domain.StatusAberta {
-		return ErrInvoiceNotAberta
+		return domain.ErrInvoiceNotAberta
 	}
 
 	stockItems := invoice.StockDecreaseItems()

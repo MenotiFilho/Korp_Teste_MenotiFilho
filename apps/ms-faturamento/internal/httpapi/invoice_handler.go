@@ -3,11 +3,13 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
 )
 
 type InvoiceCreator interface {
@@ -242,5 +244,5 @@ func parseInt64(s string) (int64, error) {
 }
 
 func isInvoiceNotFoundError(err error) bool {
-	return strings.Contains(err.Error(), "invoice not found")
+	return errors.Is(err, repository.ErrInvoiceNotFound)
 }

@@ -80,7 +80,7 @@ func TestPrintInvoiceHandler_WhenInvoiceIsFechada_ShouldReturn409(t *testing.T) 
 		return domain.Invoice{ID: 1, Numero: 100, Status: domain.StatusFechada, Itens: []domain.InvoiceItem{}}, nil
 	}}
 	printer := printServiceStub{printFn: func(_ context.Context, _ domain.Invoice) error {
-		return service.ErrInvoiceNotAberta
+		return domain.ErrInvoiceNotAberta
 	}}
 
 	h := NewPrintInvoiceHandler(loader, printer)

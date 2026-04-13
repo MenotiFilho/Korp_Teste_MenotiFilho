@@ -5,11 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
+	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/repository"
 )
 
 type invoiceServiceStub struct {
@@ -297,7 +299,7 @@ func TestUpdateInvoiceHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testin
 
 func TestUpdateInvoiceHandler_WhenInvoiceNotFound_ShouldReturn404(t *testing.T) {
 	// Arrange
-	repoErr := errors.New("invoice not found: id=999")
+	repoErr := fmt.Errorf("%w: id=999", repository.ErrInvoiceNotFound)
 	svc := invoiceServiceStub{updateFn: func(_ context.Context, _ int64, _ []domain.InvoiceItem) (domain.Invoice, error) {
 		return domain.Invoice{}, repoErr
 	}}
@@ -377,7 +379,7 @@ func TestDeleteInvoiceHandler_WhenIDIsInvalid_ShouldReturn400(t *testing.T) {
 
 func TestDeleteInvoiceHandler_WhenInvoiceNotFound_ShouldReturn404(t *testing.T) {
 	// Arrange
-	repoErr := errors.New("invoice not found: id=999")
+	repoErr := fmt.Errorf("%w: id=999", repository.ErrInvoiceNotFound)
 	svc := invoiceServiceStub{deleteFn: func(_ context.Context, _ int64) error {
 		return repoErr
 	}}
