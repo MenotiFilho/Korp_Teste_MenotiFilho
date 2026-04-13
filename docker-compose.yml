@@ -1,7 +1,7 @@
 services:
   ms-estoque:
     build:
-      context: ../apps/ms-estoque
+      context: ./apps/ms-estoque
       dockerfile: Dockerfile
     container_name: korp-ms-estoque
     environment:
@@ -27,7 +27,7 @@ services:
 
   ms-faturamento:
     build:
-      context: ../apps/ms-faturamento
+      context: ./apps/ms-faturamento
       dockerfile: Dockerfile
     container_name: korp-ms-faturamento
     environment:
@@ -59,7 +59,7 @@ services:
     container_name: korp-frontend
     working_dir: /usr/src/app
     volumes:
-      - ../apps/frontend:/usr/src/app:delegated
+      - ./apps/frontend:/usr/src/app:delegated
       - /usr/src/app/node_modules
     environment:
       CHOKIDAR_USEPOLLING: 'true'
