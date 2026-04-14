@@ -157,19 +157,5 @@ export class NotaDetailComponent implements OnInit, OnDestroy {
     this.drawer.close();
   }
 
-  imprimir(): void {
-    if (!this.nota || this.nota.status !== 'ABERTA') return;
-    this.loading = true;
-    this.notaService.print(this.nota.id).subscribe({
-      next: () => {
-        this.loading = false;
-        this.snackbar.success('Nota impressa com sucesso!');
-        this.carregarNota(this.nota!.id);
-      },
-      error: () => {
-        this.loading = false;
-        this.snackbar.error('Erro ao imprimir nota');
-      },
-    });
-  }
+
 }
