@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { ProdutoService } from '../../../core/services/produto.service';
@@ -29,11 +29,12 @@ import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service'
   templateUrl: './produto-form.component.html',
   styleUrls: ['./produto-form.component.scss'],
 })
-export class ProdutoFormComponent implements OnInit, OnDestroy {
+export class ProdutoFormComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   form: FormGroup;
   editMode = false;
   produtoEdicao: Produto | null = null;
-  private sub!: Subscription;
 
   constructor(
     private fb: FormBuilder,
@@ -50,7 +51,7 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.sub = this.drawer.state$.subscribe((state) => {
+    this.drawer.state$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
       if (state.open) {
         if (state.component.startsWith('produto-edit-')) {
           const id = parseInt(state.component.replace('produto-edit-', ''), 10);
@@ -74,10 +75,6 @@ export class ProdutoFormComponent implements OnInit, OnDestroy {
         }
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
   }
 
   fechar(): void {

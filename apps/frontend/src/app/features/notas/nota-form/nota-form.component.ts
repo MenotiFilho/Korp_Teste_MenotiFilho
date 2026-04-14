@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { ProdutoService } from '../../../core/services/produto.service';
@@ -29,12 +29,12 @@ interface ItemNota {
   templateUrl: './nota-form.component.html',
   styleUrls: ['./nota-form.component.scss'],
 })
-export class NotaFormComponent implements OnInit, OnDestroy {
+export class NotaFormComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   produtos: Produto[] = [];
   itens: ItemNota[] = [];
   produtoMap = new Map<string, string>();
-
-  private drawerSub!: Subscription;
 
   constructor(
     private drawer: DrawerService,
@@ -46,15 +46,11 @@ export class NotaFormComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarProdutos();
-    this.drawerSub = this.drawer.state$.subscribe((state) => {
+    this.drawer.state$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
       if (state.open && state.component === 'nota-form') {
         this.carregarProdutos();
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this.drawerSub?.unsubscribe();
   }
 
   private carregarProdutos(): void {

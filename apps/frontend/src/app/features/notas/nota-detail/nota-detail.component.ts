@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { NotaService } from '../../../core/services/nota.service';
@@ -35,7 +35,9 @@ interface EditableItem {
   templateUrl: './nota-detail.component.html',
   styleUrls: ['./nota-detail.component.scss'],
 })
-export class NotaDetailComponent implements OnInit, OnDestroy {
+export class NotaDetailComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   nota: Nota | null = null;
   loading = false;
   saving = false;
@@ -46,8 +48,6 @@ export class NotaDetailComponent implements OnInit, OnDestroy {
   itensEditaveis: EditableItem[] = [];
   produtoMap = new Map<string, string>();
 
-  private sub!: Subscription;
-
   constructor(
     private drawer: DrawerService,
     private snackbar: SnackbarService,
@@ -57,16 +57,12 @@ export class NotaDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.sub = this.drawer.state$.subscribe((state) => {
+    this.drawer.state$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
       if (state.open && state.component.startsWith('nota-detail-')) {
         const notaId = parseInt(state.component.replace('nota-detail-', ''), 10);
         this.carregarNota(notaId);
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
   }
 
   private carregarNota(id: number): void {

@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProdutoService } from '../../../core/services/produto.service';
 import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Produto } from '../../../core/models/produto.model';
@@ -30,7 +30,9 @@ import { DrawerService } from '../../../shared/services/drawer.service';
   templateUrl: './produtos-list.component.html',
   styleUrls: ['./produtos-list.component.scss'],
 })
-export class ProdutosListComponent implements OnInit, OnDestroy {
+export class ProdutosListComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   displayedColumns = ['codigo', 'descricao', 'saldo', '_editar', '_excluir'];
   searchTerm = '';
   pageSize = 10;
@@ -38,8 +40,6 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
   produtos: Produto[] = [];
   produtosFiltrados: Produto[] = [];
   erroCarregamento = '';
-
-  private drawerSub!: Subscription;
 
   constructor(
     private produtoService: ProdutoService,
@@ -51,13 +51,9 @@ export class ProdutosListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarProdutos();
-    this.drawerSub = this.drawer.state$.subscribe((state) => {
+    this.drawer.state$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
       if (!state.open) this.carregarProdutos();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.drawerSub?.unsubscribe();
   }
 
   get paginaAtual(): Produto[] {

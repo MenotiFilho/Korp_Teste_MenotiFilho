@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
-import { Subscription } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NotaService } from '../../../core/services/nota.service';
 import { ApiErrorMapper } from '../../../core/services/api-error-mapper.service';
 import { Nota } from '../../../core/models/nota.model';
@@ -34,7 +34,9 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
   templateUrl: './notas-list.component.html',
   styleUrls: ['./notas-list.component.scss'],
 })
-export class NotasListComponent implements OnInit, OnDestroy {
+export class NotasListComponent implements OnInit {
+  private destroyRef = inject(DestroyRef);
+
   displayedColumns = ['numero', 'itens', 'status', '_visualizar', '_imprimir', '_excluir'];
   pageSize = 10;
   pageIndex = 0;
@@ -51,8 +53,6 @@ export class NotasListComponent implements OnInit, OnDestroy {
     { value: 'FECHADA', label: 'FECHADA' },
   ];
 
-  private drawerSub!: Subscription;
-
   constructor(
     private notaService: NotaService,
     private drawer: DrawerService,
@@ -63,13 +63,9 @@ export class NotasListComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.carregarNotas();
-    this.drawerSub = this.drawer.state$.subscribe((state) => {
+    this.drawer.state$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
       if (!state.open) this.carregarNotas();
     });
-  }
-
-  ngOnDestroy(): void {
-    this.drawerSub?.unsubscribe();
   }
 
   get paginaAtual(): Nota[] {
