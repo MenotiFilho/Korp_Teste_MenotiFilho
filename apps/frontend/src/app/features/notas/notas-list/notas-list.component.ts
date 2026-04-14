@@ -78,7 +78,7 @@ export class NotasListComponent implements OnInit, OnDestroy {
   }
 
   carregarNotas(): void {
-    this.notaService.listLatest().subscribe({
+    this.notaService.listAll().subscribe({
       next: (r) => {
         this.notas = r;
         this.erroCarregamento = '';
