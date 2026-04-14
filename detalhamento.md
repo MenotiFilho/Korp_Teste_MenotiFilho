@@ -105,3 +105,19 @@ INTERNAL_ERROR com HTTP 500, impedindo que o processo seja derrubado.
 
 Erros de validacao de dominio sao definidos como sentinel errors e
 verificados com errors.Is() nos handlers.
+
+---
+
+## Tratamento de Erros no Frontend
+
+O `ApiErrorMapper` (`api-error-mapper.service.ts`) traduz erros HTTP em
+mensagens amigaveis para o usuario via snackbar:
+
+- **Servidor offline (status 0)**: "Servico indisponivel. Tente novamente mais tarde."
+- **408 Timeout**: "Tempo de requisicao esgotado."
+- **429 Rate Limit**: "Muitas requisicoes. Aguarde um momento."
+- **502/503/504**: mensagens amigaveis de servico indisponivel.
+- **Respostas JSON** com `code` e `message` do backend: mapeados diretamente.
+- **Outros erros HTTP**: usa `err.statusText` como fallback.
+
+---
