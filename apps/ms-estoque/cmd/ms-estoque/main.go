@@ -55,12 +55,10 @@ func main() {
 
 	// Apply CORS using rs/cors so the frontend (localhost:4200) can call the APIs
 	c := cors.New(cors.Options{
-		// Allow all origins in development so other testers can access the APIs
-		AllowedOrigins:   []string{"*"},
+		AllowOriginFunc:  func(origin string) bool { return true },
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key"},
-		ExposedHeaders:   []string{"Content-Type"},
-		AllowCredentials: true,
+		AllowedHeaders:   []string{"Content-Type", "Authorization", "Idempotency-Key", "X-Request-ID"},
+		AllowCredentials: false,
 	})
 
 	handler = c.Handler(handler)

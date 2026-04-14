@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { Subscription } from 'rxjs';
 import { DrawerService } from '../../../shared/services/drawer.service';
 import { SnackbarService } from '../../../shared/services/snackbar.service';
 import { ProdutoService } from '../../../core/services/produto.service';
@@ -28,10 +29,12 @@ interface ItemNota {
   templateUrl: './nota-form.component.html',
   styleUrls: ['./nota-form.component.scss'],
 })
-export class NotaFormComponent implements OnInit {
+export class NotaFormComponent implements OnInit, OnDestroy {
   produtos: Produto[] = [];
   itens: ItemNota[] = [];
   produtoMap = new Map<string, string>();
+
+  private drawerSub!: Subscription;
 
   constructor(
     private drawer: DrawerService,
@@ -42,6 +45,19 @@ export class NotaFormComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.carregarProdutos();
+    this.drawerSub = this.drawer.state$.subscribe((state) => {
+      if (state.open && state.component === 'nota-form') {
+        this.carregarProdutos();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.drawerSub?.unsubscribe();
+  }
+
+  private carregarProdutos(): void {
     this.produtoService.listAll().subscribe({
       next: (produtos) => {
         this.produtos = produtos.filter((p) => p.saldo > 0);

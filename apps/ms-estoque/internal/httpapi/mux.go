@@ -5,6 +5,16 @@ import "net/http"
 func NewMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /health", healthHandler)
+	// Fallback OPTIONS handler to ensure CORS preflight requests are handled
+	// by the CORS middleware (rs/cors) and return a clean 204 when no route
+	// explicitly matches the request. This is a minimal, non-invasive addition.
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+		http.NotFound(w, r)
+	})
 	return mux
 }
 
