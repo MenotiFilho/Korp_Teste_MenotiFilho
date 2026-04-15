@@ -53,6 +53,7 @@ O Sistema de Emissão de Notas Fiscais é uma aplicação full-stack composta po
 - **Propósito:** Inicialização de dados via chamadas HTTP, configuração de subscriptions reativas
 - **Exemplo (NotaFormComponent):**
   - Arquivo: `apps/frontend/src/app/features/notas/nota-form/nota-form.component.ts:47-54`
+
   ```typescript
   ngOnInit(): void {
     this.carregarProdutos();
@@ -68,6 +69,7 @@ O Sistema de Emissão de Notas Fiscais é uma aplicação full-stack composta po
 - **Propósito:** Filtrar eventos de navegação para atualizar título da página e fechar drawer
 - **Uso de operadores RxJS:** `filter` e `map`
 - **Arquivo:** `apps/frontend/src/app/app.component.ts:42-50`
+
   ```typescript
   this.router.events
     .pipe(
@@ -88,6 +90,7 @@ O Sistema de Emissão de Notas Fiscais é uma aplicação full-stack composta po
 **Observable em Services:**
 - **ProdutoService:** Todos os métodos retornam `Observable<T>`
   - Arquivo: `apps/frontend/src/app/core/services/produto.service.ts:13-15`
+
   ```typescript
   listAll(): Observable<Produto[]> {
     return this.http.get<Produto[]>(`${this.base}/api/v1/produtos`);
@@ -99,6 +102,7 @@ O Sistema de Emissão de Notas Fiscais é uma aplicação full-stack composta po
 **BehaviorSubject para Gerenciamento de Estado:**
 - **DrawerService:** Gerencia estado reativo do drawer lateral
   - Arquivo: `apps/frontend/src/app/shared/services/drawer.service.ts:14-28`
+
   ```typescript
   private state = new BehaviorSubject<DrawerState>({
     open: false,
@@ -121,6 +125,7 @@ O Sistema de Emissão de Notas Fiscais é uma aplicação full-stack composta po
 **Operadores .pipe():**
 - **AppComponent:** `filter` e `map` para processamento de eventos de rota
   - Arquivo: `apps/frontend/src/app/app.component.ts:42-46`
+
   ```typescript
   .pipe(
     filter((event) => event instanceof NavigationEnd),
@@ -221,6 +226,7 @@ require (
 
 **Recover Middleware:**
 - Arquivo: `apps/ms-estoque/internal/middleware/recover.go:10-21`
+
 ```go
 func Recover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -270,6 +276,7 @@ func Recover(next http.Handler) http.Handler {
 - Problema: Dois usarios tentando dar baixa no mesmo momento em um mesmo objeto
 - Solução: O sistema usa lock pessimista a nível de linha no banco de dados:
 - Arquivo: `apps/ms-estoque/internal/repository/product_repository.go:221`
+
 ```go
 // SELECT com FOR UPDATE - bloqueia a linha até o commit
 err := tx.QueryRowContext(ctx, "SELECT saldo FROM produtos WHERE codigo = $1 FOR UPDATE", codigo).Scan(&saldo)
@@ -284,6 +291,7 @@ err := tx.QueryRowContext(ctx, "SELECT saldo FROM produtos WHERE codigo = $1 FOR
 
 **Mensagens amigáveis:**
 - Arquivo: `apps/frontend/src/app/core/services/api-error-mapper.service.ts:5-12`
+
 ```typescript
 const FRIENDLY_MESSAGES: Record<number, string> = {
   0:   'Serviço indisponível. Tente novamente mais tarde.',
