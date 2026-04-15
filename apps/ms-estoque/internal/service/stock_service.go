@@ -11,6 +11,7 @@ import (
 
 type StockRepository interface {
 	DecreaseStock(ctx context.Context, items []domain.StockDecreaseItem, idempotencyKey string) error
+	IdempotencyKeyExists(ctx context.Context, key string) error
 }
 
 type StockService struct {
@@ -36,6 +37,10 @@ func (s *StockService) DecreaseStock(ctx context.Context, inputs []StockDecrease
 	}
 
 	return s.repo.DecreaseStock(ctx, items, idempotencyKey)
+}
+
+func (s *StockService) IdempotencyKeyExists(ctx context.Context, key string) error {
+	return s.repo.IdempotencyKeyExists(ctx, key)
 }
 
 func IsStockDomainError(err error) bool {

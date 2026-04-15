@@ -28,6 +28,9 @@ func RegisterProductRoutes(mux *http.ServeMux, handler *ProductHandler) {
 
 func RegisterStockRoutes(mux *http.ServeMux, handler *StockHandler) {
 	mux.HandleFunc("POST /api/v1/estoque/baixa", handler.DecreaseStock)
+	mux.HandleFunc("GET /api/v1/estoque/baixas/{key}", func(w http.ResponseWriter, r *http.Request) {
+		handler.CheckIdempotencyKey(w, r)
+	})
 }
 
 func healthHandler(w http.ResponseWriter, _ *http.Request) {

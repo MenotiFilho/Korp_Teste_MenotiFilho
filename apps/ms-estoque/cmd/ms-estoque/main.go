@@ -47,7 +47,7 @@ func main() {
 	productService := service.NewProductService(productRepo)
 	productHandler := httpapi.NewProductHandler(productService)
 	stockService := service.NewStockService(productRepo)
-	stockHandler := httpapi.NewStockHandler(stockService)
+	stockHandler := httpapi.NewStockHandler(stockService, stockService)
 	httpapi.RegisterProductRoutes(mux, productHandler)
 	httpapi.RegisterStockRoutes(mux, stockHandler)
 	// Wrap mux with project middlewares first

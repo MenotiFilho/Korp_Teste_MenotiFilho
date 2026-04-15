@@ -15,8 +15,13 @@ type StockDecreaser interface {
 	DecreaseStock(ctx context.Context, items []service.StockDecreaseInput, idempotencyKey string) error
 }
 
+type IdempotencyKeyChecker interface {
+	IdempotencyKeyExists(ctx context.Context, key string) error
+}
+
 type StockHandler struct {
 	service StockDecreaser
+	checker IdempotencyKeyChecker
 }
 
 type decreaseStockRequest struct {
@@ -28,8 +33,8 @@ type decreaseStockItemRequest struct {
 	Quantidade int    `json:"quantidade"`
 }
 
-func NewStockHandler(service StockDecreaser) *StockHandler {
-	return &StockHandler{service: service}
+func NewStockHandler(service StockDecreaser, checker IdempotencyKeyChecker) *StockHandler {
+	return &StockHandler{service: service, checker: checker}
 }
 
 func (h *StockHandler) DecreaseStock(w http.ResponseWriter, r *http.Request) {
@@ -93,4 +98,27 @@ func (h *StockHandler) handleDecreaseError(w http.ResponseWriter, r *http.Reques
 	}
 
 	WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+}
+
+func (h *StockHandler) CheckIdempotencyKey(w http.ResponseWriter, r *http.Request) {
+	key := r.PathValue("key")
+	if strings.TrimSpace(key) == "" {
+		WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "idempotency key e obrigatoria", nil)
+		return
+	}
+
+	if err := h.checker.IdempotencyKeyExists(r.Context(), key); err != nil {
+		if errors.Is(err, repository.ErrIdempotencyKeyNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if errors.Is(err, repository.ErrIdempotencyKeyRequired) {
+			WriteError(w, r, http.StatusBadRequest, "VALIDATION_ERROR", "idempotency key e obrigatoria", nil)
+			return
+		}
+		WriteError(w, r, http.StatusInternalServerError, "INTERNAL_ERROR", "erro interno do servidor", nil)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

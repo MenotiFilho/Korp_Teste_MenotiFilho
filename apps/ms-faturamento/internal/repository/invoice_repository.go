@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/MenotiFilho/Korp_Teste_MenotiFilho/apps/ms-faturamento/internal/domain"
 )
@@ -337,4 +338,56 @@ WHERE id = $1 AND deleted_at IS NULL
 	}
 
 	return nil
+}
+
+func (r *InvoiceRepository) ListStaleOpenInvoices(ctx context.Context, olderThan time.Duration) ([]domain.Invoice, error) {
+	const query = `
+SELECT id, numero, status
+FROM notas
+WHERE deleted_at IS NULL
+  AND status = 'ABERTA'
+  AND created_at < NOW() - $1::interval
+ORDER BY id ASC
+`
+
+	interval := fmt.Sprintf("%d seconds", int(olderThan.Seconds()))
+	rows, err := r.db.QueryContext(ctx, query, interval)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	type invoiceRow struct {
+		ID     int64
+		Numero int
+		Status string
+	}
+
+	ids := make([]invoiceRow, 0)
+	for rows.Next() {
+		var ir invoiceRow
+		if err := rows.Scan(&ir.ID, &ir.Numero, &ir.Status); err != nil {
+			return nil, err
+		}
+		ids = append(ids, ir)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(ids) == 0 {
+		return []domain.Invoice{}, nil
+	}
+
+	invoices := make([]domain.Invoice, 0, len(ids))
+	for _, ir := range ids {
+		invoices = append(invoices, domain.Invoice{
+			ID:     ir.ID,
+			Numero: ir.Numero,
+			Status: ir.Status,
+		})
+	}
+
+	return invoices, nil
 }

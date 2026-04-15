@@ -155,3 +155,27 @@ func isConnectionError(err error) bool {
 	}
 	return false
 }
+
+func (c *StockClient) IdempotencyKeyExists(ctx context.Context, key string) (bool, error) {
+	url := c.baseURL + "/api/v1/estoque/baixas/" + key
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, fmt.Errorf("create check request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return false, ErrEstoqueUnavailable
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		return false, ErrEstoqueUnavailable
+	}
+}

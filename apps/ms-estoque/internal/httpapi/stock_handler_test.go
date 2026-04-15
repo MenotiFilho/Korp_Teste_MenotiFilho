@@ -20,6 +20,27 @@ func (s stockDecreaserStub) DecreaseStock(ctx context.Context, items []service.S
 	return s.decreaseFn(ctx, items, idempotencyKey)
 }
 
+type idempotencyKeyCheckerStub struct {
+	checkFn func(ctx context.Context, key string) error
+}
+
+func (s idempotencyKeyCheckerStub) IdempotencyKeyExists(ctx context.Context, key string) error {
+	if s.checkFn == nil {
+		return nil
+	}
+	return s.checkFn(ctx, key)
+}
+
+func noopChecker() IdempotencyKeyChecker {
+	return idempotencyKeyCheckerStub{}
+}
+
+func noopSvc() StockDecreaser {
+	return stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
+		return nil
+	}}
+}
+
 func TestDecreaseStockHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
 	// Arrange
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, items []service.StockDecreaseInput, idempotencyKey string) error {
@@ -34,7 +55,7 @@ func TestDecreaseStockHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
 		}
 		return nil
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-001","quantidade":2}]}`)))
 	req.Header.Set("Idempotency-Key", "idem-abc")
 	rec := httptest.NewRecorder()
@@ -51,7 +72,7 @@ func TestDecreaseStockHandler_WhenPayloadIsValid_ShouldReturn200(t *testing.T) {
 func TestDecreaseStockHandler_WhenPayloadIsInvalidJSON_ShouldReturn400(t *testing.T) {
 	// Arrange
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error { return nil }}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":`)))
 	rec := httptest.NewRecorder()
 
@@ -72,7 +93,7 @@ func TestDecreaseStockHandler_WhenItemsEmpty_ShouldReturn400(t *testing.T) {
 		called = true
 		return nil
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[]}`)))
 	req.Header.Set("Idempotency-Key", "idem-empty")
 	rec := httptest.NewRecorder()
@@ -97,7 +118,7 @@ func TestDecreaseStockHandler_WhenIdempotencyKeyMissing_ShouldReturn400(t *testi
 		called = true
 		return nil
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-001","quantidade":2}]}`)))
 	rec := httptest.NewRecorder()
 
@@ -119,7 +140,7 @@ func TestDecreaseStockHandler_WhenInvalidItem_ShouldReturn400(t *testing.T) {
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrInvalidDecreaseItem
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"","quantidade":0}]}`)))
 	rec := httptest.NewRecorder()
 
@@ -138,7 +159,7 @@ func TestDecreaseStockHandler_WhenProductNotFound_ShouldReturn404(t *testing.T) 
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrProductNotFound
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-999","quantidade":1}]}`)))
 	req.Header.Set("Idempotency-Key", "idem-notfound")
 	rec := httptest.NewRecorder()
@@ -158,7 +179,7 @@ func TestDecreaseStockHandler_WhenInsufficientStock_ShouldReturn409(t *testing.T
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return repository.ErrProductInsufficientStock
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-001","quantidade":999}]}`)))
 	req.Header.Set("Idempotency-Key", "idem-insufficient")
 	rec := httptest.NewRecorder()
@@ -178,13 +199,74 @@ func TestDecreaseStockHandler_WhenUnexpectedError_ShouldReturn500(t *testing.T) 
 	svc := stockDecreaserStub{decreaseFn: func(_ context.Context, _ []service.StockDecreaseInput, _ string) error {
 		return errors.New("db timeout")
 	}}
-	h := NewStockHandler(svc)
+	h := NewStockHandler(svc, noopChecker())
 	req := httptest.NewRequest(http.MethodPost, "/api/v1/estoque/baixa", bytes.NewReader([]byte(`{"itens":[{"codigo":"P-001","quantidade":1}]}`)))
 	req.Header.Set("Idempotency-Key", "idem-unexpected")
 	rec := httptest.NewRecorder()
 
 	// Act
 	h.DecreaseStock(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, rec.Code)
+	}
+	assertErrorCode(t, rec.Body.Bytes(), "INTERNAL_ERROR")
+}
+
+func TestCheckIdempotencyKey_WhenKeyExists_ShouldReturn200(t *testing.T) {
+	// Arrange
+	checker := idempotencyKeyCheckerStub{checkFn: func(_ context.Context, key string) error {
+		if key != "invoice-print-1" {
+			t.Fatalf("expected key invoice-print-1, got %q", key)
+		}
+		return nil
+	}}
+	h := NewStockHandler(noopSvc(), checker)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/estoque/baixas/invoice-print-1", nil)
+	req.SetPathValue("key", "invoice-print-1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.CheckIdempotencyKey(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
+func TestCheckIdempotencyKey_WhenKeyNotFound_ShouldReturn404(t *testing.T) {
+	// Arrange
+	checker := idempotencyKeyCheckerStub{checkFn: func(_ context.Context, _ string) error {
+		return repository.ErrIdempotencyKeyNotFound
+	}}
+	h := NewStockHandler(noopSvc(), checker)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/estoque/baixas/invoice-print-999", nil)
+	req.SetPathValue("key", "invoice-print-999")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.CheckIdempotencyKey(rec, req)
+
+	// Assert
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected status %d, got %d", http.StatusNotFound, rec.Code)
+	}
+}
+
+func TestCheckIdempotencyKey_WhenUnexpectedError_ShouldReturn500(t *testing.T) {
+	// Arrange
+	checker := idempotencyKeyCheckerStub{checkFn: func(_ context.Context, _ string) error {
+		return errors.New("db timeout")
+	}}
+	h := NewStockHandler(noopSvc(), checker)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/estoque/baixas/invoice-print-1", nil)
+	req.SetPathValue("key", "invoice-print-1")
+	rec := httptest.NewRecorder()
+
+	// Act
+	h.CheckIdempotencyKey(rec, req)
 
 	// Assert
 	if rec.Code != http.StatusInternalServerError {

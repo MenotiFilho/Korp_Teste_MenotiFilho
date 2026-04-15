@@ -17,6 +17,10 @@ func (s stockRepositoryStub) DecreaseStock(ctx context.Context, items []domain.S
 	return s.decreaseFn(ctx, items, idempotencyKey)
 }
 
+func (s stockRepositoryStub) IdempotencyKeyExists(_ context.Context, _ string) error {
+	return nil
+}
+
 func TestStockService_DecreaseStock_WhenItemsAreValid_ShouldCallRepository(t *testing.T) {
 	// Arrange
 	called := false

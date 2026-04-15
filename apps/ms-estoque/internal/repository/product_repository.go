@@ -249,3 +249,22 @@ func (r *ProductRepository) DecreaseStock(ctx context.Context, items []domain.St
 
 	return nil
 }
+
+var ErrIdempotencyKeyNotFound = errors.New("idempotency key not found")
+
+func (r *ProductRepository) IdempotencyKeyExists(ctx context.Context, key string) error {
+	key = strings.TrimSpace(key)
+	if key == "" {
+		return ErrIdempotencyKeyRequired
+	}
+
+	var exists bool
+	err := r.db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM estoque_baixas WHERE idempotency_key = $1)", key).Scan(&exists)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return fmt.Errorf("%w: key=%s", ErrIdempotencyKeyNotFound, key)
+	}
+	return nil
+}

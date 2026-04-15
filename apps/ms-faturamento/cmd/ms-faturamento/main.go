@@ -50,6 +50,7 @@ func main() {
 	stockClient := service.NewStockClient(cfg.EstoqueURL, 2*time.Second)
 	printService := service.NewPrintInvoiceService(invoiceRepo, stockClient)
 	printHandler := httpapi.NewPrintInvoiceHandler(invoiceRepo, printService)
+	reconciliation := service.NewReconciliationService(invoiceRepo, stockClient, 30*time.Second, 2*time.Minute)
 	httpapi.RegisterInvoiceRoutes(mux, invoiceHandler)
 	httpapi.RegisterPrintInvoiceRoutes(mux, printHandler)
 	// Wrap mux with project middlewares first
@@ -83,6 +84,8 @@ func main() {
 		slog.Info("ms-faturamento starting", "port", cfg.Port)
 		errCh <- server.ListenAndServe()
 	}()
+
+	go reconciliation.Run(ctx)
 
 	select {
 	case <-ctx.Done():
