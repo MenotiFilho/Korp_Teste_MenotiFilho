@@ -96,6 +96,12 @@ export class NotasListComponent implements OnInit {
     if (this.statusFilter) {
       r = r.filter((n) => n.status === this.statusFilter);
     }
+    // Ensure notes with status 'ABERTA' appear before 'FECHADA' while
+    // preserving a deterministic secondary order by numero.
+    r.sort((a, b) => {
+      if (a.status === b.status) return a.numero - b.numero;
+      return a.status === 'ABERTA' ? -1 : 1;
+    });
     this.notasFiltradas = r;
   }
 
