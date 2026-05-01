@@ -1,0 +1,30 @@
+services:
+  ms-estoque:
+    ports: !reset []
+
+  ms-faturamento:
+    ports: !reset []
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.prod
+    image: korp-frontend-prod
+    container_name: korp-frontend
+    ports:
+      - "127.0.0.1:4210:80"
+    volumes: !reset []
+    command: !reset null
+    environment: !reset []
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  db-estoque:
+    ports: !reset []
+
+  db-faturamento:
+    ports: !reset []

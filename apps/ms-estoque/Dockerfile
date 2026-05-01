@@ -6,13 +6,17 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/ms-estoque ./cmd/ms-estoque
+
+ARG TARGETOS=linux
+ARG TARGETARCH
+
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o /bin/ms-estoque ./cmd/ms-estoque
 
 FROM alpine:3.20
 
 WORKDIR /app
 
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates wget
 
 COPY --from=builder /bin/ms-estoque /app/ms-estoque
 
